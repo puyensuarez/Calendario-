@@ -334,6 +334,31 @@ input:focus, select:focus, textarea:focus { border-color: var(--text); }
 .chip-semana   { background: rgba(142,68,173,0.13);  color: #6c3483; }
 .chip-entrega  { background: rgba(26,115,232,0.14);  color: #0d4a8a; font-weight:800; }
 .chip-cfu      { background: rgba(22,160,133,0.18);  color: #0e6655; font-weight:800; }
+.chip-daynote  { background: rgba(241,196,15,0.20);   color: #7d6608; font-weight:700; }
+
+/* Day note editor inside modal */
+.day-note-editor {
+  margin-top: 16px; border-top: 1.5px solid var(--border); padding-top: 16px;
+}
+.day-note-editor label {
+  display: block; font-size: 11px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+}
+.day-note-editor textarea {
+  width: 100%; resize: vertical; min-height: 80px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.6;
+  padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 8px;
+  background: var(--surface2); color: var(--text); outline: none;
+  transition: border-color 0.18s;
+}
+.day-note-editor textarea:focus { border-color: var(--text); }
+.day-note-save-btn {
+  margin-top: 10px; display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  background: var(--text); color: #fff; border: none; cursor: pointer;
+  transition: background 0.18s, transform 0.15s;
+}
+.day-note-save-btn:hover { background: #333; transform: translateY(-1px); }
 
 /* Day detail modal content */
 .day-modal-date {
@@ -1180,6 +1205,7 @@ const CAL_MONTHS = [
   { year:2026, month:3 }, // Abril
   { year:2026, month:4 }, // Mayo
   { year:2026, month:5 }, // Junio
+  { year:2026, month:6 }, // Julio
 ];
 
 function pad2(n) { return String(n).padStart(2,'0'); }
@@ -1235,7 +1261,10 @@ function renderCrono() {
     <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
       <span style="width:10px;height:10px;border-radius:50%;background:#1a73e8;display:inline-block"></span>Entrega
     </span>
-    <span style="font-size:11px;color:var(--muted);margin-left:auto">Hacé clic en los días con eventos para ver el detalle</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      <span style="width:10px;height:10px;border-radius:50%;background:#f1c40f;display:inline-block"></span>Nota personal
+    </span>
+    <span style="font-size:11px;color:var(--muted);margin-left:auto">Hacé clic en cualquier día para agregar notas o ver eventos</span>
   `;
   container.appendChild(legend);
 
@@ -1274,18 +1303,21 @@ function renderCrono() {
     }
 
     for(let day = 1; day <= daysInMonth; day++) {
-      const key = pad2(day) + '/' + pad2(month+1);
-      const events = DAY_MAP[key] || [];
-      const jsDay = new Date(year, month, day).getDay();
-      const dowMF = dowMonFirst(jsDay);
+      const key    = pad2(day) + '/' + pad2(month+1);
+      const noteKey = pad2(day) + '/' + pad2(month+1) + '/' + year;
+      const events  = DAY_MAP[key] || [];
+      const hasNote = !!(customDayNotes[noteKey] && customDayNotes[noteKey].trim());
+      const jsDay   = new Date(year, month, day).getDay();
+      const dowMF   = dowMonFirst(jsDay);
       const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===day;
       const isSunday = jsDay === 0;
 
       const cell = document.createElement('div');
-      cell.className = 'cal-cell' +
-        (events.length ? ' has-event' : '') +
+      // All cells are clickable — use has-event style when there's events OR a note
+      cell.className = 'cal-cell has-event' +
         (isSunday ? ' sunday' : '') +
-        (isToday ? ' today' : '');
+        (isToday  ? ' today'  : '');
+      cell.style.cursor = 'pointer';
 
       // Day number
       const numEl = document.createElement('div');
@@ -1293,20 +1325,18 @@ function renderCrono() {
       numEl.textContent = day;
       cell.appendChild(numEl);
 
-      // Group events by subject, show max 1 chip per subject + special chips
-      // Priority: exam/entrega first, then one per subj
+      // Event chips (max 2 to leave room for note chip)
       const shown = new Set();
       const sorted = [...events].sort((a,b) => {
         const priority = {exam:0, entrega:1, holiday:2, repaso:3, semana:4, normal:5, practica:6};
         return (priority[a.type]||9) - (priority[b.type]||9);
       });
-
+      const maxChips = hasNote ? 2 : 3;
       let chipCount = 0;
       sorted.forEach(ev => {
-        if(chipCount >= 3) return;
+        if(chipCount >= maxChips) return;
         const chipKey = ev.type==='exam'||ev.type==='entrega'||ev.type==='holiday'||ev.type==='semana'||ev.type==='repaso'
-          ? ev.type + ev.subj
-          : ev.subj;
+          ? ev.type + ev.subj : ev.subj;
         if(shown.has(chipKey)) return;
         shown.add(chipKey);
 
@@ -1334,9 +1364,18 @@ function renderCrono() {
         chipCount++;
       });
 
-      if(events.length) {
-        (function(d,m,y,evs,dMF){ cell.addEventListener('click',()=>showDayModal(d,m,y,evs,dMF)); })(day,month,year,events,dowMF);
+      // 📌 Note chip
+      if(hasNote) {
+        const noteChip = document.createElement('div');
+        noteChip.className = 'cal-chip chip-daynote';
+        noteChip.innerHTML = `<span class="cal-chip-dot" style="background:#f1c40f"></span><span class="cal-chip-label">📌 Nota</span>`;
+        cell.appendChild(noteChip);
       }
+
+      // Every cell is clickable — open modal for events AND/OR note editing
+      (function(d,m,y,evs,dMF,nk){
+        cell.addEventListener('click', () => showDayModal(d,m,y,evs,dMF,nk));
+      })(day, month, year, events, dowMF, noteKey);
 
       grid.appendChild(cell);
     }
@@ -1354,8 +1393,11 @@ function renderCrono() {
 // ─────────────────────────────────────────────
 // DAY MODAL
 // ─────────────────────────────────────────────
-function showDayModal(day, month, year, events, dowMF) {
+function showDayModal(day, month, year, events, dowMF, noteKey) {
   const dateStr = `${DOW_LONG[dowMF]}, ${day} de ${MONTH_NAMES[month]} de ${year}`;
+  // noteKey format: DD/MM/YYYY
+  const nk = noteKey || (pad2(day) + '/' + pad2(month+1) + '/' + year);
+  const existingNote = customDayNotes[nk] || '';
 
   // Group by subject
   const bySubj = {};
@@ -1387,12 +1429,47 @@ function showDayModal(day, month, year, events, dowMF) {
     `;
   }).join('');
 
+  // Note editor section
+  const noteEditorHTML = `
+    <div class="day-note-editor">
+      <label>📌 Nota personal para este día</label>
+      <textarea id="dayNoteTextarea" placeholder="Escribí algo para este día... ej: estudiar Unidad 3, entregar informe, etc.">${existingNote}</textarea>
+      <button class="day-note-save-btn" onclick="saveModalDayNote('${nk}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Guardar nota
+      </button>
+    </div>
+  `;
+
+  const emptyMsg = events.length === 0
+    ? `<div style="text-align:center;padding:18px 0;color:var(--muted);font-size:14px">📅 Sin eventos académicos este día.</div>`
+    : '';
+
   document.getElementById('detailContent').innerHTML = `
     <div class="day-modal-date">Calendario Académico 2026</div>
     <div class="day-modal-title">${dateStr}</div>
     ${sectionsHTML}
+    ${emptyMsg}
+    ${noteEditorHTML}
   `;
   document.getElementById('modalDetail').classList.add('open');
+}
+
+function saveModalDayNote(noteKey) {
+  const textarea = document.getElementById('dayNoteTextarea');
+  if (!textarea) return;
+  const text = textarea.value.trim();
+
+  if (text) {
+    customDayNotes[noteKey] = text;
+  } else {
+    delete customDayNotes[noteKey];
+  }
+  saveCustomDayNotes();
+  closeModal('modalDetail');
+  // Re-render calendar to update chips
+  renderCrono();
+  toast(text ? '📌 Nota guardada' : 'Nota eliminada');
 }
 
 
@@ -1418,6 +1495,7 @@ function showTab(t) {
 // ─────────────────────────────────────────────
 let tareas = JSON.parse(localStorage.getItem('unc_tareas') || '[]');
 let notas  = JSON.parse(localStorage.getItem('unc_notas')  || '[]');
+let customDayNotes = JSON.parse(localStorage.getItem('unc_custom_day_notes') || '{}');
 
 function saveTareas() { 
   localStorage.setItem('unc_tareas', JSON.stringify(tareas)); 
@@ -1425,6 +1503,10 @@ function saveTareas() {
 }
 function saveNotas()  { 
   localStorage.setItem('unc_notas',  JSON.stringify(notas));  
+  syncTriggerChange();
+}
+function saveCustomDayNotes() {
+  localStorage.setItem('unc_custom_day_notes', JSON.stringify(customDayNotes));
   syncTriggerChange();
 }
 
@@ -2263,7 +2345,8 @@ async function createNewGist(token) {
     unc_subs3: JSON.parse(localStorage.getItem('unc_subs3') || 'null') || SUBJECTS_DEFAULT,
     unc_exams3: JSON.parse(localStorage.getItem('unc_exams3') || '[]'),
     unc_tareas: JSON.parse(localStorage.getItem('unc_tareas') || '[]'),
-    unc_notas: JSON.parse(localStorage.getItem('unc_notas') || '[]')
+    unc_notas: JSON.parse(localStorage.getItem('unc_notas') || '[]'),
+    unc_custom_day_notes: JSON.parse(localStorage.getItem('unc_custom_day_notes') || '{}')
   };
   
   const response = await fetch('https://api.github.com/gists', {
@@ -2324,7 +2407,8 @@ async function uploadLocalDataToGist(token, gistId) {
     unc_subs3: JSON.parse(localStorage.getItem('unc_subs3') || 'null') || SUBJECTS_DEFAULT,
     unc_exams3: JSON.parse(localStorage.getItem('unc_exams3') || '[]'),
     unc_tareas: JSON.parse(localStorage.getItem('unc_tareas') || '[]'),
-    unc_notas: JSON.parse(localStorage.getItem('unc_notas') || '[]')
+    unc_notas: JSON.parse(localStorage.getItem('unc_notas') || '[]'),
+    unc_custom_day_notes: JSON.parse(localStorage.getItem('unc_custom_day_notes') || '{}')
   };
   
   const response = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -2366,6 +2450,10 @@ function mergeCloudData(cloudData) {
   if (cloudData.unc_notas) {
     notas = cloudData.unc_notas;
     localStorage.setItem('unc_notas', JSON.stringify(notas));
+  }
+  if (cloudData.unc_custom_day_notes) {
+    customDayNotes = cloudData.unc_custom_day_notes;
+    localStorage.setItem('unc_custom_day_notes', JSON.stringify(customDayNotes));
   }
 }
 
