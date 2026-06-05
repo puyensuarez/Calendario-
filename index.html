@@ -1,0 +1,2425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendario — Lic. Economía UNC</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f3ee;
+  --surface: #ffffff;
+  --surface2: #f0ede6;
+  --border: #e2ddd5;
+  --text: #1a1814;
+  --muted: #8a8478;
+  --accent: #c0392b;
+  --c-estadistica: #2c7be5;
+  --c-proyectos:   #27ae60;
+  --c-monetaria:   #8e44ad;
+  --c-ec-int:      #e67e22;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.025'%3E%3Ccircle cx='1' cy='1' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+.app { position: relative; z-index: 1; max-width: 1020px; margin: 0 auto; padding: 36px 20px 80px; }
+
+header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 20px;
+  margin-bottom: 36px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--text);
+}
+.logo-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 3px; color: var(--muted); margin-bottom: 6px; }
+h1 { font-family: 'Syne', sans-serif; font-size: clamp(26px, 4vw, 38px); font-weight: 800; line-height: 1.05; }
+h1 span { color: var(--accent); }
+.header-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 18px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none; transition: all 0.18s;
+}
+.btn-dark { background: var(--text); color: #fff; }
+.btn-dark:hover { background: #333; transform: translateY(-1px); }
+.btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+.btn-outline:hover { border-color: var(--text); }
+.btn-danger { background: #e74c3c; color: #fff; padding: 5px 11px; font-size: 12px; border-radius: 6px; }
+.btn-danger:hover { background: #c0392b; }
+.btn-gcal { background: #1a73e8; color: #fff; }
+.btn-gcal:hover { background: #1558b0; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26,115,232,0.3); }
+.btn-sync { background: transparent; color: #2c7be5; border: 1.5px solid rgba(44,123,229,0.3); }
+.btn-sync:hover { border-color: #2c7be5; background: rgba(44,123,229,0.05); }
+.btn-sync.connected { color: #27ae60; border-color: rgba(39,174,96,0.3); }
+.btn-sync.connected:hover { border-color: #27ae60; background: rgba(39,174,96,0.05); }
+.btn-sync.error { color: #e74c3c; border-color: rgba(231,76,60,0.3); }
+.btn-sync.error:hover { border-color: #e74c3c; background: rgba(231,76,60,0.05); }
+.cloud-icon { transition: transform 0.3s ease; }
+.btn-sync:hover .cloud-icon { transform: translateY(-1px); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+
+.tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 28px; }
+.tab {
+  padding: 10px 22px; font-size: 14px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; border: none;
+  background: transparent; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.18s;
+}
+.tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 700; }
+.tab:hover:not(.active) { color: var(--text); }
+
+.week-wrap { overflow-x: auto; }
+.week-outer {
+  border: 1.5px solid var(--text);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 560px;
+}
+.week-header-row {
+  display: grid;
+  grid-template-columns: 52px repeat(5, 1fr);
+  border-bottom: 1.5px solid var(--text);
+}
+.wh {
+  background: var(--text); color: #fff;
+  padding: 10px 8px; text-align: center;
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.wh.tc { background: var(--surface2); color: var(--muted); font-size: 10px; font-family: 'DM Sans', sans-serif; font-weight: 400; letter-spacing: 0; }
+.week-body {
+  display: grid;
+  grid-template-columns: 52px repeat(5, 1fr);
+}
+.time-col-wrap { display: flex; flex-direction: column; }
+.time-slot {
+  height: 58px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--muted);
+  background: var(--surface2);
+  border-top: 1px solid var(--border);
+}
+.time-slot:first-child { border-top: none; }
+.day-col {
+  position: relative;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+}
+.day-col-bg {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  pointer-events: none;
+}
+.hour-line {
+  height: 58px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.hour-line:first-child { border-top: none; }
+.cblock {
+  position: absolute;
+  left: 3px; right: 3px;
+  border-radius: 6px; padding: 6px 8px; font-size: 11px;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.15s;
+  border-left: 3px solid transparent;
+  overflow: hidden;
+  z-index: 1;
+  box-sizing: border-box;
+}
+.cblock:hover { filter: brightness(0.9); transform: scaleX(0.98); }
+.cblock .cn { font-weight: 700; font-size: 11px; line-height: 1.3; }
+.cblock .cr { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+.cblock .ct { font-size: 9px; opacity: 0.6; font-style: italic; margin-top: 1px; }
+.color-estadistica { background: rgba(44,123,229,0.15); border-left-color: var(--c-estadistica); color: #1a5db5; }
+.color-proyectos   { background: rgba(39,174, 96,0.15); border-left-color: var(--c-proyectos);   color: #1e8449; }
+.color-monetaria   { background: rgba(142,68,173,0.15); border-left-color: var(--c-monetaria);   color: #6c3483; }
+.color-ec-int      { background: rgba(230,126, 34,0.15); border-left-color: var(--c-ec-int);     color: #a04000; }
+
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.leg-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+.leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.subject-pill {
+  display: flex; align-items: stretch; gap: 14px;
+  padding: 16px 20px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 10px;
+  margin-bottom: 10px; transition: border-color 0.2s;
+}
+.subject-pill:hover { border-color: var(--text); }
+.sp-stripe { width: 5px; border-radius: 3px; flex-shrink: 0; }
+.sp-info { flex: 1; }
+.sp-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+.sp-meta { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.7; }
+
+.exam-card {
+  display: flex; align-items: center; gap: 18px;
+  padding: 18px 20px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 10px;
+  margin-bottom: 10px; border-left-width: 4px;
+}
+.exam-date { text-align: center; min-width: 52px; }
+.exam-day { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; color: var(--accent); }
+.exam-month { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.exam-divider { width: 1px; align-self: stretch; background: var(--border); }
+.exam-info { flex: 1; }
+.exam-title { font-weight: 700; font-size: 15px; }
+.exam-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px; }
+.badge-soon { background: rgba(231,76,60,0.12); color: #c0392b; }
+.badge-ok   { background: rgba(39,174,96,0.12);  color: #1e8449; }
+
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,24,20,0.55); backdrop-filter: blur(6px);
+  z-index: 100; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1.5px solid var(--text);
+  border-radius: 16px; padding: 28px;
+  width: 100%; max-width: 530px;
+  animation: su 0.22s ease;
+}
+@keyframes su { from { transform: translateY(16px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+.modal-title { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 800; margin-bottom: 20px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+.fg { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+input, select, textarea {
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 10px 13px;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+  outline: none; transition: border-color 0.18s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--text); }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fgrid .span2 { grid-column: 1/-1; }
+
+.detail-row { display: flex; gap: 10px; margin-bottom: 10px; font-size: 14px; align-items: baseline; }
+.detail-label { color: var(--muted); min-width: 90px; font-size: 13px; }
+
+.exp-steps { margin-top: 16px; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+.exp-step { display: flex; gap: 14px; padding: 13px 16px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+.exp-step:last-child { border-bottom: none; }
+.exp-num { width: 22px; height: 22px; border-radius: 50%; background: var(--text); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.exp-text { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.exp-text strong { color: var(--text); }
+
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--text); color: #fff;
+  padding: 11px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 500; z-index: 999;
+  transform: translateY(80px); opacity: 0; transition: all 0.28s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+.empty { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 15px; }
+.empty-icon { font-size: 44px; margin-bottom: 10px; }
+
+/* ── Calendario mensual ── */
+.cal-month-section { margin-bottom: 48px; }
+
+.cal-month-header {
+  display: flex; align-items: baseline; gap: 14px;
+  margin-bottom: 14px; padding-bottom: 12px;
+  border-bottom: 2px solid var(--text);
+}
+.cal-month-name {
+  font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
+  color: var(--text);
+}
+.cal-month-year { font-size: 14px; color: var(--muted); font-weight: 400; }
+
+/* 7-column grid */
+.cal-grid-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(46px, 1fr));
+  border: 1.5px solid var(--text);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 360px;
+}
+
+/* Day-of-week headers */
+.cal-dow {
+  background: var(--text); color: #fff;
+  text-align: center;
+  padding: 9px 4px;
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+/* Sunday = last column (7th) */
+.cal-dow:last-child { background: var(--accent); }
+
+/* Individual day cells */
+.cal-cell {
+  min-height: 90px;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  padding: 6px 7px;
+  background: var(--surface);
+  position: relative;
+  vertical-align: top;
+  cursor: default;
+  transition: background 0.15s;
+}
+/* Remove left border on cells that start a new row (every 7th starting from 1st cell) */
+.cal-grid .cal-cell:nth-child(7n+8) { border-left: none; }
+.cal-cell.empty { background: var(--surface2); cursor: default; }
+.cal-cell.has-event { cursor: pointer; }
+.cal-cell.has-event:hover { background: #fdf8f2; }
+
+.cal-cell-num {
+  font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
+  line-height: 1; margin-bottom: 5px;
+  color: var(--text);
+}
+.cal-cell.sunday .cal-cell-num { color: var(--accent); }
+.cal-cell.today .cal-cell-num {
+  color: #fff;
+  background: var(--text);
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+
+/* Pill chips inside cells — per subject */
+.cal-chip {
+  display: flex; align-items: center; gap: 4px;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 9.5px; font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.cal-chip-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.cal-chip-label { overflow:hidden; text-overflow:ellipsis; }
+
+/* Subject chip colours */
+.chip-epi          { background: rgba(39,174,96,0.14);   color: #1a6635; }
+.chip-ec-int       { background: rgba(230,126,34,0.14);  color: #7a3800; }
+.chip-estadistica  { background: rgba(44,123,229,0.14);  color: #1a4a8a; }
+.chip-monetaria    { background: rgba(142,68,173,0.14);  color: #6c3483; }
+.chip-holiday  { background: rgba(192,57,43,0.12);   color: var(--accent); }
+.chip-exam     { background: rgba(231,76,60,0.20);   color: #7a1000; font-weight:800; }
+.chip-repaso   { background: rgba(39,174,96,0.13);   color: #1e8449; }
+.chip-semana   { background: rgba(142,68,173,0.13);  color: #6c3483; }
+.chip-entrega  { background: rgba(26,115,232,0.14);  color: #0d4a8a; font-weight:800; }
+.chip-cfu      { background: rgba(22,160,133,0.18);  color: #0e6655; font-weight:800; }
+
+/* Day detail modal content */
+.day-modal-date {
+  font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.day-modal-title {
+  font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+  margin-bottom: 18px; line-height: 1.1;
+}
+.day-subj-section { margin-bottom: 14px; }
+.day-subj-header {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; margin-bottom: 6px; color: var(--muted);
+}
+.day-subj-stripe { width:3px; border-radius:2px; align-self:stretch; min-height:14px; flex-shrink:0; }
+.day-event-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 12px; border-radius: 8px;
+  margin-bottom: 6px; font-size: 13px; line-height: 1.45;
+}
+.day-event-row:last-child { margin-bottom: 0; }
+.day-event-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.ev-epi         { background: rgba(39,174,96,0.10); }
+.ev-ec-int      { background: rgba(230,126,34,0.10); }
+.ev-estadistica { background: rgba(44,123,229,0.10); }
+.ev-monetaria   { background: rgba(142,68,173,0.10); }
+.ev-cfu         { background: rgba(22,160,133,0.12); font-weight: 600; }
+.ev-holiday { background: rgba(192,57,43,0.07); }
+.ev-exam    { background: rgba(231,76,60,0.13); font-weight:600; }
+.ev-repaso  { background: rgba(39,174,96,0.10); }
+.ev-semana  { background: rgba(142,68,173,0.10); }
+.ev-entrega { background: rgba(26,115,232,0.10); font-weight:600; }
+
+/* ── Tareas ── */
+.tarea-card {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 18px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 10px;
+  margin-bottom: 10px; transition: border-color 0.18s;
+  border-left-width: 4px;
+}
+.tarea-card.done { opacity: 0.5; }
+.tarea-card.done .tarea-titulo { text-decoration: line-through; }
+.tarea-check {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid var(--border); cursor: pointer;
+  flex-shrink: 0; margin-top: 2px; transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+}
+.tarea-check.checked { background: #27ae60; border-color: #27ae60; color: #fff; }
+.tarea-body { flex: 1; }
+.tarea-titulo { font-weight: 700; font-size: 15px; }
+.tarea-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.tarea-fecha-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; margin-left: 6px;
+}
+.tarea-vencida  { background: rgba(231,76,60,0.12); color: #c0392b; }
+.tarea-hoy      { background: rgba(231,76,60,0.20); color: #922b21; }
+.tarea-pronto   { background: rgba(230,126,34,0.15); color: #a04000; }
+.tarea-ok       { background: rgba(39,174,96,0.12); color: #1e8449; }
+
+/* ── Notas ── */
+.nota-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 10px; margin-bottom: 12px;
+  overflow: hidden; transition: border-color 0.18s;
+}
+.nota-card:hover { border-color: var(--text); }
+.nota-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; cursor: pointer;
+}
+.nota-titulo { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; }
+.nota-fecha  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.nota-body {
+  display: none; padding: 0 18px 16px;
+  font-size: 13px; line-height: 1.7; color: var(--text);
+  white-space: pre-wrap; border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.nota-body.open { display: block; }
+.nota-actions { display: flex; gap: 8px; }
+.consulta-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.consulta-card:hover { border-color: var(--text); }
+.consulta-card-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.consulta-stripe { width: 5px; border-radius: 3px; align-self: stretch; flex-shrink: 0; }
+.consulta-materia { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; }
+.consulta-comision { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.consulta-rows { padding: 10px 20px 14px 20px; display: flex; flex-direction: column; gap: 8px; }
+.consulta-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 14px; border-radius: 8px;
+  background: var(--surface2);
+  font-size: 13px;
+}
+.consulta-row-icon { font-size: 18px; flex-shrink: 0; }
+.consulta-row-info { flex: 1; }
+.consulta-row-dia { font-weight: 700; font-size: 14px; }
+.consulta-row-detalle { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.consulta-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.badge-virtual    { background: rgba(26,115,232,0.12); color: #1a4a8a; }
+.badge-presencial { background: rgba(39,174,96,0.12);  color: #1a6635; }
+.badge-teorico    { background: rgba(142,68,173,0.12); color: #6c3483; }
+.badge-practico   { background: rgba(44,123,229,0.12); color: #1a5db5; }
+  header { grid-template-columns: 1fr; }
+  .fgrid { grid-template-columns: 1fr; }
+  .fgrid .span2 { grid-column: 1; }
+  .cal-cell { min-height: 70px; padding: 4px 4px; }
+  .cal-cell-num { font-size: 14px; }
+  .cal-chip { font-size: 8.5px; padding: 1px 3px; }
+  .cal-dow { font-size: 9px; padding: 7px 2px; letter-spacing: 0; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <div class="logo-eyebrow">UNC · Fac. de Ciencias Económicas · Lic. en Economía</div>
+      <h1>Agenda <span>2026</span></h1>
+      <div class="header-sub">Mayo – Agosto &nbsp;·&nbsp; Puyen Daniel Suarez Iglesias</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="openAddExam()">+ Parcial</button>
+      <button class="btn btn-gcal" onclick="showExport()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5C3.9 3 3 3.9 3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+        Exportar a Google Calendar
+      </button>
+      <button class="btn btn-sync" onclick="openSyncSettings()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cloud-icon"><path d="M17.5 19A5.5 5.5 0 0 0 17 8H16.03a9 9 0 1 0-11.96 4.96A5.5 5.5 0 0 0 5 19z"></path></svg>
+        Sincronizar nube
+      </button>
+    </div>
+  </header>
+
+  <div class="tabs" style="flex-wrap:wrap;">
+    <button class="tab active" onclick="showTab('weekly')">Vista Semanal</button>
+    <button class="tab" onclick="showTab('subjects')">Materias</button>
+    <button class="tab" onclick="showTab('consultas')">Consultas</button>
+    <button class="tab" onclick="showTab('exams')">Parciales</button>
+    <button class="tab" onclick="showTab('crono')">Calendario</button>
+    <button class="tab" onclick="showTab('tareas')">Tareas</button>
+    <button class="tab" onclick="showTab('notas')">Notas</button>
+  </div>
+
+  <!-- WEEKLY -->
+  <div id="tab-weekly">
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-estadistica)"></div>Estadística III</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-proyectos)"></div>Proyectos de Inversión</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-monetaria)"></div>Ec. Monetaria</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--c-ec-int)"></div>Ec. Internacional</div>
+    </div>
+    <div class="week-wrap">
+      <div class="week-outer" id="weekOuter"></div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:right">Hacé clic en un bloque para ver detalles · Inicio de clases: 09/03/2026</p>
+  </div>
+
+  <!-- SUBJECTS -->
+  <div id="tab-subjects" style="display:none">
+    <div id="subjectList"></div>
+  </div>
+
+  <!-- CONSULTAS -->
+  <div id="tab-consultas" style="display:none">
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px">Horarios de Consulta</div>
+    <div id="consultasList"></div>
+  </div>
+
+  <!-- EXAMS -->
+  <div id="tab-exams" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700">Parciales &amp; Exámenes</span>
+      <button class="btn btn-dark btn-sm" onclick="openAddExam()">+ Agregar</button>
+    </div>
+    <div id="examList"></div>
+  </div>
+
+  <!-- CRONOGRAMA EC. INTERNACIONAL -->
+  <div id="tab-crono" style="display:none">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800">Calendario Académico · Marzo – Junio 2026</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">4 materias · Marzo – Junio 2026 · Hacé clic en los días con eventos para ver el detalle</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:#c0392b;display:inline-block"></span>Feriado</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:var(--c-ec-int);display:inline-block"></span>Parcial</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:#27ae60;display:inline-block"></span>Repaso</span>
+      </div>
+    </div>
+    <div id="cronoContent"></div>
+  </div>
+  <!-- TAREAS -->
+  <div id="tab-tareas" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <span style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700">Tareas</span>
+      <button class="btn btn-dark btn-sm" id="btnAddTarea">+ Nueva tarea</button>
+    </div>
+    <div id="tareasEmpty" style="display:none" class="empty">
+      <div class="empty-icon">✅</div>
+      No hay tareas pendientes. ¡Todo al día!
+    </div>
+    <div id="tareasList"></div>
+  </div>
+
+  <!-- NOTAS -->
+  <div id="tab-notas" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <span style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700">Notas</span>
+      <button class="btn btn-dark btn-sm" id="btnAddNota">+ Nueva nota</button>
+    </div>
+    <div id="notasEmpty" style="display:none" class="empty">
+      <div class="empty-icon">📓</div>
+      No hay notas aún. Creá tu primera nota.
+    </div>
+    <div id="notasList"></div>
+  </div>
+
+</div><!-- end .app -->
+<div class="modal-overlay" id="modalDetail">
+  <div class="modal">
+    <div id="detailContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalDetail')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exam Modal -->
+<div class="modal-overlay" id="modalExam">
+  <div class="modal">
+    <div class="modal-title">📝 Nuevo Parcial / Examen</div>
+    <div class="fgrid">
+      <div class="fg span2"><label>Materia</label><select id="eSubject"></select></div>
+      <div class="fg"><label>Tipo</label>
+        <select id="eType">
+          <option>Primer Parcial</option><option>Segundo Parcial</option>
+          <option>Parcial Integrador</option><option>Recuperatorio</option>
+          <option>Final</option><option>TP / Entrega</option>
+        </select>
+      </div>
+      <div class="fg"><label>Fecha</label><input type="date" id="eDate"></div>
+      <div class="fg"><label>Horario</label><input type="time" id="eTime" value="10:00"></div>
+      <div class="fg"><label>Aula / Ubicación</label><input type="text" id="eRoom" placeholder="Ej: Aula Magna"></div>
+      <div class="fg span2"><label>Notas</label><textarea id="eNotes" rows="2" placeholder="Temas, materiales permitidos..."></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalExam')">Cancelar</button>
+      <button class="btn btn-dark" onclick="saveExam()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal-overlay" id="modalExport">
+  <div class="modal">
+    <div class="modal-title">📅 Exportar a Google Calendar</div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:14px">Se descargará un archivo <strong style="color:var(--text)">.ics</strong> con todas tus clases (Mayo–Agosto) y parciales.</p>
+    <div style="background:var(--surface2);border-radius:8px;padding:14px;font-size:13px" id="exportSummary"></div>
+    <div class="exp-steps">
+      <div class="exp-step"><div class="exp-num">1</div><div class="exp-text">Hacé clic en <strong>"Descargar .ics"</strong></div></div>
+      <div class="exp-step"><div class="exp-num">2</div><div class="exp-text">Abrí <strong>Google Calendar</strong> desde la web (PC)</div></div>
+      <div class="exp-step"><div class="exp-num">3</div><div class="exp-text">Menú lateral → <strong>"Otros calendarios" → "+" → "Importar"</strong></div></div>
+      <div class="exp-step"><div class="exp-num">4</div><div class="exp-text">Seleccioná el archivo <strong>.ics</strong> → <strong>"Importar"</strong> ✓</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalExport')">Cancelar</button>
+      <button class="btn btn-gcal" onclick="downloadICS()">⬇ Descargar .ics</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tarea Modal -->
+<div class="modal-overlay" id="modalTarea">
+  <div class="modal">
+    <div class="modal-title">✅ Nueva Tarea</div>
+    <div class="fgrid">
+      <div class="fg span2"><label>Título</label><input type="text" id="tTitulo" placeholder="Ej: Entregar TP de EPI"></div>
+      <div class="fg"><label>Fecha</label><input type="date" id="tFecha"></div>
+      <div class="fg"><label>Hora (opcional)</label><input type="time" id="tHora" value=""></div>
+      <div class="fg span2"><label>Materia (opcional)</label>
+        <select id="tMateria">
+          <option value="">— Sin materia —</option>
+          <option value="estadistica">Estadística III</option>
+          <option value="epi">Proyectos de Inversión</option>
+          <option value="monetaria">Economía Monetaria</option>
+          <option value="ec-int">Economía Internacional</option>
+        </select>
+      </div>
+      <div class="fg span2"><label>Descripción (opcional)</label><input type="text" id="tDesc" placeholder="Detalles adicionales..."></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalTarea')">Cancelar</button>
+      <button class="btn btn-dark" onclick="saveTarea()">Guardar tarea</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nota Modal -->
+<div class="modal-overlay" id="modalNota">
+  <div class="modal">
+    <div class="modal-title" id="notaModalTitle">📓 Nueva Nota</div>
+    <div class="fgrid">
+      <div class="fg span2"><label>Título</label><input type="text" id="nTitulo" placeholder="Título de la nota"></div>
+      <div class="fg span2">
+        <label>Contenido</label>
+        <textarea id="nContenido" rows="8" style="width:100%;resize:vertical;font-family:'DM Sans',sans-serif;font-size:13px;padding:10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);line-height:1.6" placeholder="Escribí tu nota acá..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modalNota')">Cancelar</button>
+      <button class="btn btn-dark" id="notaSaveBtn" onclick="saveNota()">Guardar nota</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sync Modal -->
+<div class="modal-overlay" id="modalSync">
+  <div class="modal" style="max-width: 580px;">
+    <div class="modal-title">☁️ Sincronización en la Nube</div>
+    <div style="font-size: 13.5px; color: var(--muted); margin-bottom: 20px; line-height: 1.6;">
+      Sincronizá tus materias, parciales, tareas y notas entre todos tus dispositivos de forma segura a través de <strong>GitHub Gists</strong>. Tus datos se guardarán de forma privada en tu cuenta de GitHub.
+    </div>
+    
+    <div class="fgrid">
+      <div class="fg span2">
+        <label>1. GitHub Personal Access Token (PAT)</label>
+        <input type="password" id="syncToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="font-family: monospace;">
+        <span style="font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.4;">
+          Necesitás un token clásico con permiso <strong>'gist'</strong>. 
+          <a href="https://github.com/settings/tokens/new?scopes=gist&description=Agenda%20UNC%20Sync" target="_blank" rel="noopener noreferrer" style="color: var(--c-estadistica); text-decoration: underline; font-weight: 600;">Crear token en GitHub ↗</a>
+        </span>
+      </div>
+      
+      <div class="fg span2">
+        <label>2. Gist ID (Opcional si vas a crear uno nuevo)</label>
+        <input type="text" id="syncGistId" placeholder="Dejar vacío para crear uno automáticamente o pegar ID existente" style="font-family: monospace;">
+        <span style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+          Si ya configuraste la sincronización en otro dispositivo, pegá acá el ID del Gist que se generó.
+        </span>
+      </div>
+      
+      <div class="fg span2" id="syncStatusBox" style="background: var(--surface2); border-radius: 8px; padding: 12px 16px; font-size: 12.5px; border-left: 3px solid var(--border); margin-top: 8px; display: none;">
+        <div style="font-weight: 700; margin-bottom: 4px;" id="syncStatusTitle">Estado de la sincronización</div>
+        <div id="syncStatusText" style="color: var(--muted); line-height: 1.4;">No conectado.</div>
+      </div>
+    </div>
+    
+    <div class="modal-actions" style="margin-top: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; width: 100%; align-items: center;">
+      <div>
+        <button class="btn btn-danger btn-sm" id="btnSyncDisconnect" onclick="disconnectSync()" style="display: none;">Desconectar cuenta</button>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-outline" onclick="closeModal('modalSync')">Cancelar</button>
+        <button class="btn btn-dark" id="btnSyncSave" onclick="saveAndConnectSync()">Conectar y Sincronizar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+// ── Pre-loaded SIU Guaraní data ──
+const SUBJECTS_DEFAULT = [
+  {
+    id:1, name:'Estadística III', colorKey:'estadistica', color:'#2c7be5', commission:'FLORENSA',
+    classes:[
+      {days:[0], start:'16:00', end:'18:00', type:'Teórico',  room:'MG'},
+      {days:[2], start:'16:00', end:'18:00', type:'Práctica', room:'MG'},
+      {days:[3], start:'16:00', end:'18:00', type:'Teórico',  room:'MG'},
+    ]
+  },
+  {
+    id:2, name:'Proyectos de Inversión', colorKey:'proyectos', color:'#27ae60', commission:'SARTORI_AISA',
+    classes:[
+      {days:[0], start:'18:00', end:'20:00', type:'Práctica', room:'INFORMÁTICA 1'},
+      {days:[1], start:'18:00', end:'20:00', type:'Teórico',  room:'INFORMÁTICA 2'},
+      {days:[2], start:'20:00', end:'22:00', type:'Teórico',  room:'R'},
+    ]
+  },
+  {
+    id:3, name:'Economía Monetaria', colorKey:'monetaria', color:'#8e44ad', commission:'NEDER - CFC',
+    classes:[
+      {days:[0], start:'16:00', end:'18:00', type:'Teórico',  room:'R'},
+      {days:[2], start:'18:00', end:'20:00', type:'Práctica', room:'F'},
+      {days:[4], start:'16:00', end:'18:00', type:'Teórico',  room:'F'},
+    ]
+  },
+  {
+    id:4, name:'Economía Internacional', colorKey:'ec-int', color:'#e67e22', commission:'GANAME',
+    classes:[
+      {days:[1], start:'16:00', end:'18:00', type:'Teórico',  room:'D'},
+      {days:[2], start:'16:00', end:'18:00', type:'Teórico',  room:'D'},
+      {days:[3], start:'18:00', end:'20:00', type:'Práctica', room:'D'},
+    ]
+  }
+];
+
+let subjects = JSON.parse(localStorage.getItem('unc_subs3') || 'null') || SUBJECTS_DEFAULT;
+let exams    = JSON.parse(localStorage.getItem('unc_exams3') || '[]');
+function save() {
+  localStorage.setItem('unc_subs3',  JSON.stringify(subjects));
+  localStorage.setItem('unc_exams3', JSON.stringify(exams));
+  syncTriggerChange();
+}
+
+const DAYS_SHORT = ['Lun','Mar','Mié','Jue','Vie'];
+const DAYS_LONG  = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+const HOURS = [15,16,17,18,19,20,21];
+
+// ── Pre-load all exams (Ec. Internacional + EPI) ──
+(function() {
+  // Use a new key so existing users also get the EPI exams loaded
+  const VERSION_KEY = 'unc_exams_v6';
+  if(localStorage.getItem(VERSION_KEY)) return; // already seeded
+
+  const seed = [
+    // ── Economía Internacional (subjectId: 4) ──
+    {
+      id: 9001, subjectId: 4, subjectName: 'Economía Internacional',
+      type: 'Primer Parcial', date: '2026-05-14', time: '16:00',
+      room: 'Aula D', notes: 'Comprende Unidades 1 a 7'
+    },
+    {
+      id: 9002, subjectId: 4, subjectName: 'Economía Internacional',
+      type: 'Recuperatorio', date: '2026-06-04', time: '16:00',
+      room: 'Aula D', notes: 'Comprende Unidades 1 a 7'
+    },
+    // ── Proyectos de Inversión (subjectId: 2) ──
+    {
+      id: 9003, subjectId: 2, subjectName: 'Proyectos de Inversión',
+      type: 'Primer Parcial', date: '2026-04-28', time: '18:00',
+      room: 'Informática', notes: 'Unidades 1 a 3'
+    },
+    {
+      id: 9004, subjectId: 2, subjectName: 'Proyectos de Inversión',
+      type: 'Segundo Parcial', date: '2026-05-19', time: '18:00',
+      room: 'Informática', notes: 'Unidades 4 y 5'
+    },
+    {
+      id: 9005, subjectId: 2, subjectName: 'Proyectos de Inversión',
+      type: 'Recuperatorio', date: '2026-06-08', time: '18:00',
+      room: 'Informática', notes: 'Parcial de Recuperación'
+    },
+    // ── Estadística III (subjectId: 1) ──
+    {
+      id: 9006, subjectId: 1, subjectName: 'Estadística III',
+      type: 'Primer Parcial', date: '2026-05-09', time: '16:00',
+      room: 'Aula MG', notes: 'Unidades 1 a 4 (hasta Momentos: Varianza, covarianza y coef. de correlación)'
+    },
+    {
+      id: 9007, subjectId: 1, subjectName: 'Estadística III',
+      type: 'Segundo Parcial', date: '2026-06-06', time: '16:00',
+      room: 'Aula MG', notes: 'Unidades 4 (desde Funciones generadoras) a 7'
+    },
+    // ── Economía Monetaria (subjectId: 3) ──
+    {
+      id: 9008, subjectId: 3, subjectName: 'Economía Monetaria',
+      type: 'Primer Parcial', date: '2026-04-22', time: '16:00',
+      room: 'Aula F', notes: 'Capítulos 1 a 5'
+    },
+    {
+      id: 9009, subjectId: 3, subjectName: 'Economía Monetaria',
+      type: 'Segundo Parcial', date: '2026-05-20', time: '16:00',
+      room: 'Aula F', notes: 'Capítulos 6 a 8'
+    },
+    {
+      id: 9010, subjectId: 3, subjectName: 'Economía Monetaria',
+      type: 'Parcial Integrador', date: '2026-06-10', time: '16:00',
+      room: 'Aula F', notes: 'Capítulo 9 hasta donde se llegue'
+    },
+  ];
+
+  exams = seed;
+  save();
+  localStorage.setItem(VERSION_KEY, '1');
+})();
+
+
+// ── Cronograma Data — Economía Internacional ──
+// Ec. Int. cursa: Martes y Miércoles 16-18 (Teórico) + Jueves 18-20 (Práctica)
+// Semana 1 inicia 09/03/2026
+const CRONO_WEEKS = [
+  {
+    num: 1, range: '9 – 13 de Marzo',
+    activity: 'Unidad 1',
+    days: [
+      { weekday: 'Martes',    date: '11/03', topics: ['Introducción al comercio internacional'], type: 'normal' },
+      { weekday: 'Miércoles', date: '12/03', topics: ['Unidad 1: Tendencia del comercio internacional'], type: 'normal' },
+      { weekday: 'Jueves',    date: '13/03', topics: ['Práctica — Unidad 1'], type: 'practica' },
+    ]
+  },
+  {
+    num: 2, range: '16 – 20 de Marzo',
+    activity: 'Unidades 2 y 3',
+    days: [
+      { weekday: 'Martes',    date: '17/03', topics: ['Unidad 2: Ganancias del comercio'], type: 'normal' },
+      { weekday: 'Miércoles', date: '18/03', topics: ['Unidad 3: La teoría clásica. Diferencias en la tecnología'], type: 'normal' },
+      { weekday: 'Jueves',    date: '19/03', topics: ['Práctica — Unidades 2 y 3'], type: 'practica' },
+    ]
+  },
+  {
+    num: 3, range: '23 – 27 de Marzo',
+    activity: 'Unidad 3',
+    days: [
+      { weekday: 'Martes',    date: '24/03', topics: ['🔴 Feriado — Día Nacional de la Memoria por la Verdad y la Justicia'], type: 'holiday' },
+      { weekday: 'Miércoles', date: '25/03', topics: ['Unidad 3: La teoría clásica. Diferencias en la tecnología (continuación)'], type: 'normal' },
+      { weekday: 'Jueves',    date: '26/03', topics: ['Práctica — Unidad 3'], type: 'practica' },
+    ]
+  },
+  {
+    num: 4, range: '30 de Marzo – 3 de Abril',
+    activity: 'Unidad 4',
+    days: [
+      { weekday: 'Martes',    date: '31/03', topics: ['Unidad 4: Diferencias en la dotación de los factores productivos'], type: 'normal' },
+      { weekday: 'Miércoles', date: '01/04', topics: ['Unidad 4: Diferencias en la dotación de los factores productivos (cont.)'], type: 'normal' },
+      { weekday: 'Jueves',    date: '02/04', topics: ['🔴 Feriado — Día del Veterano y Caídos en la Guerra de Malvinas'], type: 'holiday' },
+    ]
+  },
+  {
+    num: 5, range: '6 – 10 de Abril',
+    activity: 'Unidad 4',
+    days: [
+      { weekday: 'Martes',    date: '07/04', topics: ['Unidad 4: Diferencias en la dotación de los factores productivos (cont.)'], type: 'normal' },
+      { weekday: 'Miércoles', date: '08/04', topics: ['Unidad 4: cierre y repaso'], type: 'normal' },
+      { weekday: 'Jueves',    date: '09/04', topics: ['Práctica — Unidad 4'], type: 'practica' },
+    ]
+  },
+  {
+    num: 6, range: '13 – 17 de Abril',
+    activity: 'Unidad 5',
+    days: [
+      { weekday: 'Martes',    date: '14/04', topics: ['Unidad 5: El modelo de factores específicos'], type: 'normal' },
+      { weekday: 'Miércoles', date: '15/04', topics: ['Unidad 5: El modelo de factores específicos (cont.)'], type: 'normal' },
+      { weekday: 'Jueves',    date: '16/04', topics: ['Práctica — Unidad 5'], type: 'practica' },
+    ]
+  },
+  {
+    num: 7, range: '20 – 24 de Abril',
+    activity: 'Unidades 5 y 6',
+    days: [
+      { weekday: 'Martes',    date: '21/04', topics: ['Unidad 5: El modelo de factores específicos (cierre)'], type: 'normal' },
+      { weekday: 'Miércoles', date: '22/04', topics: ['Unidad 6: Competencia imperfecta y comercio internacional'], type: 'normal' },
+      { weekday: 'Jueves',    date: '23/04', topics: ['Práctica — Unidades 5 y 6'], type: 'practica' },
+    ]
+  },
+  {
+    num: 8, range: '27 de Abril – 1 de Mayo',
+    activity: 'Unidad 6',
+    days: [
+      { weekday: 'Martes',    date: '28/04', topics: ['Unidad 6: Competencia imperfecta y comercio internacional (cont.)'], type: 'normal' },
+      { weekday: 'Miércoles', date: '29/04', topics: ['Unidad 6: Competencia imperfecta y comercio internacional (cierre)'], type: 'normal' },
+      { weekday: 'Jueves',    date: '30/04', topics: ['Práctica — Unidad 6'], type: 'practica' },
+    ]
+  },
+  {
+    num: 9, range: '4 – 8 de Mayo',
+    activity: 'Unidad 7',
+    days: [
+      { weekday: 'Martes',    date: '05/05', topics: ['Unidad 7: El papel de la demanda y otras teorías del comercio internacional'], type: 'normal' },
+      { weekday: 'Miércoles', date: '06/05', topics: ['Unidad 8: Política comercial'], type: 'normal' },
+      { weekday: 'Jueves',    date: '07/05', topics: ['Práctica — Unidad 7'], type: 'practica' },
+    ]
+  },
+  {
+    num: 10, range: '11 – 15 de Mayo',
+    activity: 'Repaso + 1er Parcial',
+    days: [
+      { weekday: 'Martes',    date: '12/05', topics: ['Unidad 8: Política comercial (continuación)'], type: 'normal' },
+      { weekday: 'Miércoles', date: '13/05', topics: ['Repaso general — Unidades 1 a 7'], type: 'repaso' },
+      { weekday: 'Jueves',    date: '14/05', topics: ['📝 PRIMER EXAMEN PARCIAL — Comprende Unidades 1 a 7'], type: 'exam' },
+    ]
+  },
+  {
+    num: 11, range: '18 – 22 de Mayo',
+    activity: 'Unidades 8 y 9',
+    days: [
+      { weekday: 'Martes',    date: '19/05', topics: ['Unidad 8: Política comercial (cont.)'], type: 'normal' },
+      { weekday: 'Miércoles', date: '20/05', topics: ['Unidad 9: Economía Política del comercio'], type: 'normal' },
+      { weekday: 'Jueves',    date: '21/05', topics: ['Práctica — Unidades 8 y 9'], type: 'practica' },
+    ]
+  },
+  {
+    num: 12, range: '25 – 29 de Mayo',
+    activity: 'Semana de Mayo',
+    days: [
+      { weekday: 'Martes',    date: '26/05', topics: ['🟣 Semana de Mayo — Sin clases'], type: 'semana' },
+      { weekday: 'Miércoles', date: '27/05', topics: ['🟣 Semana de Mayo — Sin clases'], type: 'semana' },
+      { weekday: 'Jueves',    date: '28/05', topics: ['🟣 Semana de Mayo — Sin clases'], type: 'semana' },
+    ]
+  },
+  {
+    num: 13, range: '1 – 5 de Junio',
+    activity: 'Unidad 9 + Recuperatorio',
+    days: [
+      { weekday: 'Martes',    date: '02/06', topics: ['Unidad 9: Economía Política del comercio (continuación)'], type: 'normal' },
+      { weekday: 'Miércoles', date: '03/06', topics: ['Unidad 9: cierre'], type: 'normal' },
+      { weekday: 'Jueves',    date: '04/06', topics: ['📝 EXAMEN PARCIAL RECUPERATORIO — Comprende Unidades 1 a 7'], type: 'exam' },
+    ]
+  },
+  {
+    num: 14, range: '8 – 12 de Junio',
+    activity: 'Unidad 10',
+    days: [
+      { weekday: 'Martes',    date: '09/06', topics: ['Unidad 10: Comercio internacional y crecimiento'], type: 'normal' },
+      { weekday: 'Miércoles', date: '10/06', topics: ['Unidad 10: Comercio internacional y crecimiento (cont.)'], type: 'normal' },
+      { weekday: 'Jueves',    date: '11/06', topics: ['Práctica — Unidad 10'], type: 'practica' },
+    ]
+  },
+];
+
+// ─────────────────────────────────────────────
+// SUBJECT DEFINITIONS (for calendar legend & chips)
+// ─────────────────────────────────────────────
+const CAL_SUBJECTS = {
+  'ec-int':      { name: 'Ec. Internacional',   color: '#e67e22', chipClass: 'chip-ec-int',      evClass: 'ev-ec-int'      },
+  'epi':         { name: 'Proy. de Inversión',  color: '#27ae60', chipClass: 'chip-epi',         evClass: 'ev-epi'         },
+  'estadistica': { name: 'Estadística III',      color: '#2c7be5', chipClass: 'chip-estadistica', evClass: 'ev-estadistica' },
+  'monetaria':   { name: 'Ec. Monetaria',        color: '#8e44ad', chipClass: 'chip-monetaria',   evClass: 'ev-monetaria'   },
+};
+
+// ─────────────────────────────────────────────
+// ECONOMÍA INTERNACIONAL — events
+// ─────────────────────────────────────────────
+const EC_INT_EVENTS = [];
+CRONO_WEEKS.forEach(w => {
+  w.days.forEach(d => {
+    d.topics.forEach(t => {
+      EC_INT_EVENTS.push({
+        date: d.date, // "DD/MM"
+        subj: 'ec-int',
+        text: t,
+        type: d.type,
+        horario: '16:00–18:00'
+      });
+    });
+  });
+});
+
+// CFU — Control de Frecuencia Universitaria · Ec. Internacional (Práctico)
+// Tomados en gabinetes, tema = correspondiente a la semana del cronograma
+[
+  { date:'26/03', tema:'Unidades 1 a 3 (según cronograma de la semana)' },
+  { date:'09/04', tema:'Unidades 3 a 4 (según cronograma de la semana)' },
+  { date:'16/04', tema:'Unidades 4 a 5 (según cronograma de la semana)' },
+  { date:'30/04', tema:'Unidades 5 a 6 (según cronograma de la semana)' },
+  { date:'21/05', tema:'Unidades 8 a 9 (según cronograma de la semana)' },
+  { date:'11/06', tema:'Unidad 10 (según cronograma de la semana)'      },
+].forEach(cfu => {
+  EC_INT_EVENTS.push({
+    date: cfu.date,
+    subj: 'ec-int',
+    type: 'cfu',
+    horario: '18:00–20:00',
+    text: '📋 CFU (Práctico) — ' + cfu.tema
+  });
+});
+// ─────────────────────────────────────────────
+const EPI_EVENTS = [
+  // Semana 1
+  { date:'09/03', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Presentación de la materia, moodle, WhatsApp y horarios de consulta online' },
+  { date:'10/03', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Repaso de cálculo financiero en Excel y sistemas de amortización de préstamos' },
+  { date:'11/03', subj:'epi', type:'normal',  horario:'20:00–22:00', text:'Unidad 1: El proyecto — etapas, formulación y evaluación, diferentes enfoques. CANVAS' },
+  // Semana 2
+  { date:'16/03', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Unidad 1: El proyecto — etapas, formulación y evaluación, diferentes enfoques. CANVAS' },
+  { date:'17/03', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Unidad 2: Formulación de Proyectos. Viabilidades. Mercado, estimación de demanda y pronósticos de ventas. Viabilidad Financiera (Flujo de Fondos)' },
+  { date:'18/03', subj:'epi', type:'normal',  horario:'20:00–22:00', text:'Unidad 2: Mercado, estimación de demanda y pronósticos. Regresiones en Excel. Series temporales 1ra parte. Flujo de Fondos del proyecto y del inversor' },
+  // Semana 3
+  { date:'23/03', subj:'epi', type:'holiday', horario:'18:00–20:00', text:'FERIADO' },
+  { date:'24/03', subj:'epi', type:'holiday', horario:'18:00–20:00', text:'FERIADO — Día Nacional de la Memoria' },
+  { date:'25/03', subj:'epi', type:'normal',  horario:'20:00–22:00', text:'Unidad 2: Series temporales 2da y 3ra parte. Modelo doble logarítmico. Elasticidades de demanda. Modelos de elección discreta' },
+  // Semana 4
+  { date:'30/03', subj:'epi', type:'practica', horario:'18:00–20:00', text:'Ejercitación Guía de TPs. Cálculo Financiero. Flujo de fondos' },
+  { date:'31/03', subj:'epi', type:'practica', horario:'18:00–20:00', text:'Ejercitación Guía de TPs. Cálculo Financiero. Flujo de fondos' },
+  { date:'01/04', subj:'epi', type:'normal',   horario:'20:00–22:00', text:'Unidad 2: Series temporales 2da y 3ra parte. Modelo doble logarítmico. Elasticidades de demanda. Modelos de elección discreta' },
+  // Semana 5
+  { date:'06/04', subj:'epi', type:'normal',   horario:'18:00–20:00', text:'Localización. Aprovisionamiento y logística. Depósitos. Método ABC. Cross-docking' },
+  { date:'06/04', subj:'epi', type:'entrega',  horario:'',            text:'📋 ENTREGA: Primera versión de Monografía — Idea y CANVAS' },
+  { date:'07/04', subj:'epi', type:'practica', horario:'18:00–20:00', text:'Presentación grupal de ideas-proyecto (5 min por grupo)' },
+  { date:'08/04', subj:'epi', type:'normal',   horario:'20:00–22:00', text:'Unidad 3: Flujo de Fondos y criterios de evaluación. Ordenamiento prioritario de proyectos' },
+  // Semana 6
+  { date:'13/04', subj:'epi', type:'normal',   horario:'18:00–20:00', text:'Unidad 3: Flujo de Fondos y criterios de evaluación. El riesgo y la incertidumbre. Simulación de Montecarlo' },
+  { date:'14/04', subj:'epi', type:'practica', horario:'18:00–20:00', text:'Ejercitación criterios de evaluación. Guía de TPs. Ejercicio de Simulación de Montecarlo' },
+  { date:'15/04', subj:'epi', type:'normal',   horario:'20:00–22:00', text:'Determinación del Costo de Capital y variación de la tasa de descuento. Ajuste de tasa para incorporar el riesgo' },
+  // Semana 7
+  { date:'20/04', subj:'epi', type:'normal',   horario:'18:00–20:00', text:'Unidad 3: Momento óptimo de inversión. Valoración de empresas. Flujos de fondos incrementales. Tratamiento de la inflación' },
+  { date:'21/04', subj:'epi', type:'practica', horario:'18:00–20:00', text:'Ejercitación Guía de TPs. Reemplazo de equipos: flujo de fondos incremental, riesgo e incertidumbre, Montecarlo' },
+  { date:'22/04', subj:'epi', type:'normal',   horario:'20:00–22:00', text:'Evaluación financiera de proyectos aplicada a la regulación de los servicios públicos' },
+  // Semana 8
+  { date:'27/04', subj:'epi', type:'repaso',  horario:'18:00–20:00', text:'Repaso para 1er Parcial (Unidades 1 a 3)' },
+  { date:'28/04', subj:'epi', type:'exam',    horario:'18:00–20:00', text:'📝 PRIMERA EVALUACIÓN PARCIAL — Unidades 1 a 3' },
+  { date:'29/04', subj:'epi', type:'normal',  horario:'20:00–22:00', text:'Unidad 4: Introducción a la Evaluación Económica y Social' },
+  // Semana 9
+  { date:'04/05', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Unidad 4: Evaluación Social. Método de las distorsiones. Bibliografía: Coloma Ferrá' },
+  { date:'05/05', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Unidad 4: Evaluación Social. Método de las distorsiones. Bibliografía: Coloma Ferrá' },
+  { date:'05/05', subj:'epi', type:'entrega', horario:'',            text:'📋 ENTREGA: 2do informe de avance de Monografía — Viabilidades + Flujo de Fondos' },
+  { date:'06/05', subj:'epi', type:'normal',  horario:'20:00–22:00', text:'Unidad 4: Valor de los ahorros de tiempo, valor de la vida. Evaluación económica de proyectos de transporte' },
+  // Semana 10
+  { date:'11/05', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Unidad 5: Tasa de costo de oportunidad en evaluación de proyectos ambientales' },
+  { date:'12/05', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Unidad 5: Análisis Costo-Beneficio (ACB). Precios hedónicos, costos de viaje, evaluación contingente, análisis costo-eficiencia' },
+  { date:'13/05', subj:'epi', type:'normal',  horario:'20:00–22:00', text:'Unidad 5: Cálculo de parámetros nacionales. Matrices insumo-producto. Casos: Vivienda, Agua Potable. Evaluación de Impacto' },
+  // Semana 11
+  { date:'18/05', subj:'epi', type:'repaso',  horario:'18:00–20:00', text:'Repaso para 2do Parcial (Unidades 4 y 5)' },
+  { date:'18/05', subj:'epi', type:'entrega', horario:'',            text:'📋 ENTREGA: Monografía completa (documento + póster + pitch)' },
+  { date:'19/05', subj:'epi', type:'exam',    horario:'18:00–20:00', text:'📝 SEGUNDA EVALUACIÓN PARCIAL — Unidades 4 y 5' },
+  { date:'20/05', subj:'epi', type:'normal',  horario:'20:00–22:00', text:'Presentación oral en clase de PPT de Monografía y Video Pitch' },
+  // Semana 12 — Semana de Mayo
+  { date:'25/05', subj:'epi', type:'semana',  horario:'18:00–20:00', text:'Semana de Mayo — Exámenes' },
+  { date:'26/05', subj:'epi', type:'semana',  horario:'18:00–20:00', text:'Semana de Mayo — Exámenes' },
+  { date:'27/05', subj:'epi', type:'normal',  horario:'20:00–22:00', text:'Valor de la Vida. Teoría y ejemplos. CLASE VIRTUAL GRABADA' },
+  // Semana 13
+  { date:'01/06', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Presentación oral de PPT de Monografía y Video Pitch' },
+  { date:'02/06', subj:'epi', type:'normal',  horario:'18:00–20:00', text:'Presentación oral de PPT de Monografía y Video Pitch' },
+  { date:'03/06', subj:'epi', type:'normal',  horario:'20:00–22:00', text:'Presentación oral de PPT de Monografía y Video Pitch' },
+  // Semana 14
+  { date:'08/06', subj:'epi', type:'exam',    horario:'18:00–20:00', text:'📝 TERCERA EVALUACIÓN PARCIAL — Parcial de Recuperación' },
+];
+
+// ─────────────────────────────────────────────
+// ESTADÍSTICA III — eventos
+// Clases: Lun 16-18 (Teórico) · Mié 16-18 (Práctica) · Jue 16-18 (Teórico)
+// Semana 1: 09/03 · Feriados: 23/03(Lun), 24/03(Mar), 02/04(Jue)
+// ─────────────────────────────────────────────
+const ESTADISTICA_EVENTS = [
+  // ── Semana 1: U1 Espacio Probabilístico ──
+  { date:'09/03', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U1: Espacio Probabilístico — Introducción y conceptos fundamentales' },
+  { date:'11/03', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U1: Espacio Probabilístico — Práctica' },
+  { date:'12/03', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U1: Espacio Probabilístico — Desarrollo teórico' },
+  // ── Semana 2: U1 cierre / U2 Variables aleatorias ──
+  { date:'16/03', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U1: Espacio Probabilístico (cierre) · U2: Variables aleatorias (inicio)' },
+  { date:'18/03', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U2: Variables aleatorias — Práctica' },
+  { date:'19/03', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U2: Variables aleatorias — Distribuciones discretas y continuas' },
+  // ── Semana 3: U2 / U3 Vectores aleatorios ──
+  { date:'23/03', subj:'estadistica', type:'holiday', horario:'16:00–18:00', text:'FERIADO — Día Nacional de la Memoria' },
+  { date:'25/03', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U2: Variables aleatorias — Práctica (cont.)' },
+  { date:'26/03', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U3: Vectores aleatorios — Introducción' },
+  // ── Semana 4: U3 Vectores aleatorios ──
+  { date:'30/03', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U3: Vectores aleatorios — Distribución conjunta, marginal y condicional' },
+  { date:'01/04', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U3: Vectores aleatorios — Práctica' },
+  { date:'02/04', subj:'estadistica', type:'holiday', horario:'16:00–18:00', text:'FERIADO — Día del Veterano y Caídos en Malvinas' },
+  // ── Semana 5: U4 Distribución de funciones ──
+  { date:'06/04', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U4: Distribución de funciones de variables y vectores aleatorios — Método de la función de distribución' },
+  { date:'08/04', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U4: Distribución de funciones — Práctica' },
+  { date:'09/04', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U4: Distribución de funciones — Método del Jacobiano' },
+  // ── Semana 6: U4 cierre ──
+  { date:'13/04', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U4: Distribución de funciones — Función característica y transformadas' },
+  { date:'15/04', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U4: Distribución de funciones — Práctica (cont.)' },
+  { date:'16/04', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U4: Distribución de funciones (cierre)' },
+  // ── Semana 7: U5 Momentos ──
+  { date:'20/04', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U5: Momentos de variables aleatorias — Esperanza, varianza, covarianza' },
+  { date:'22/04', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U5: Momentos — Práctica' },
+  { date:'23/04', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U5: Momentos — Funciones generadoras de momentos' },
+  // ── Semana 8: U5 cierre + Repaso 1er Parcial ──
+  { date:'27/04', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U5: Momentos de orden superior — Varianza, covarianza y coeficiente de correlación' },
+  { date:'29/04', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U5: Momentos — Práctica (cierre)' },
+  { date:'30/04', subj:'estadistica', type:'repaso',  horario:'16:00–18:00', text:'Repaso para 1er Parcial (U1 a U4 + Momentos)' },
+  // ── Semana 9: U6 Teoría asintótica + 1er PARCIAL ──
+  { date:'04/05', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U6: Teoría asintótica — Convergencia en probabilidad y en distribución' },
+  { date:'06/05', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U6: Teoría asintótica — Práctica' },
+  { date:'07/05', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U6: Teoría asintótica — Ley de grandes números y Teorema Central del Límite' },
+  // ── Semana 10: 1er PARCIAL + U7 Estimación puntual ──
+  { date:'09/05', subj:'estadistica', type:'exam',    horario:'16:00–18:00', text:'📝 PRIMER PARCIAL — Unidades 1 a 4 (hasta Momentos: Varianza, covarianza y coef. de correlación)' },
+  { date:'11/05', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U7: Estimación puntual — Propiedades de los estimadores' },
+  { date:'13/05', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U7: Estimación puntual — Práctica' },
+  // ── Semana 11: U7 cierre ──
+  { date:'18/05', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U7: Estimación puntual — Estimadores de máxima verosimilitud' },
+  { date:'20/05', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U7: Estimación puntual — Práctica (cont.)' },
+  { date:'21/05', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U7: Estimación puntual (cierre)' },
+  // ── Semana 12: Semana de Mayo ──
+  { date:'25/05', subj:'estadistica', type:'semana',  horario:'16:00–18:00', text:'Semana de Mayo — Sin clases' },
+  { date:'27/05', subj:'estadistica', type:'semana',  horario:'16:00–18:00', text:'Semana de Mayo — Sin clases' },
+  { date:'28/05', subj:'estadistica', type:'semana',  horario:'16:00–18:00', text:'Semana de Mayo — Sin clases' },
+  // ── Semana 13: U8 Métodos de estimación / U9 Test de hipótesis ──
+  { date:'01/06', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U8: Métodos de estimación — Método de momentos y máxima verosimilitud' },
+  { date:'03/06', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U8 / U9: Métodos de estimación y Test de hipótesis — Práctica' },
+  { date:'04/06', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U9: Test de hipótesis — Neyman-Pearson y tests uniformemente más poderosos' },
+  // ── Semana 14: U9 cierre + U10 Regiones confidenciales + 2do PARCIAL ──
+  { date:'06/06', subj:'estadistica', type:'exam',    horario:'16:00–18:00', text:'📝 SEGUNDO PARCIAL — Unidades 4 (desde Funciones generadoras) a 7' },
+  { date:'08/06', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U9: Test de hipótesis (cont.) · U10: Regiones confidenciales' },
+  { date:'10/06', subj:'estadistica', type:'practica',horario:'16:00–18:00', text:'U10: Regiones confidenciales — Práctica' },
+  { date:'11/06', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'U10: Regiones confidenciales — Intervalos de confianza y su relación con tests' },
+  { date:'12/06', subj:'estadistica', type:'normal',  horario:'16:00–18:00', text:'Cierre de cursado — Repaso general' },
+];
+
+// ─────────────────────────────────────────────
+// ECONOMÍA MONETARIA — parciales en el calendario
+// Clases: Lun 16-18 (Teórico) · Mié 18-20 (Práctica) · Vie 16-18 (Teórico)
+// ─────────────────────────────────────────────
+const MONETARIA_EVENTS = [
+  { date:'22/04', subj:'monetaria', type:'exam',   horario:'16:00–18:00', text:'📝 PRIMER PARCIAL — Capítulos 1 a 5' },
+  { date:'20/05', subj:'monetaria', type:'exam',   horario:'18:00–20:00', text:'📝 SEGUNDO PARCIAL — Capítulos 6 a 8' },
+  { date:'10/06', subj:'monetaria', type:'exam',   horario:'16:00–18:00', text:'📝 PARCIAL INTEGRADOR — Capítulo 9 (hasta donde se llegue)' },
+];
+
+// ─────────────────────────────────────────────
+// BUILD UNIFIED DAY_MAP  key:"DD/MM" → [events]
+// ─────────────────────────────────────────────
+const DAY_MAP = {};
+function addToMap(evList) {
+  evList.forEach(ev => {
+    if(!DAY_MAP[ev.date]) DAY_MAP[ev.date] = [];
+    DAY_MAP[ev.date].push(ev);
+  });
+}
+addToMap(EC_INT_EVENTS);
+addToMap(EPI_EVENTS);
+addToMap(ESTADISTICA_EVENTS);
+addToMap(MONETARIA_EVENTS);
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DOW_NAMES   = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const DOW_LONG    = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+function dowMonFirst(jsDay) { return (jsDay + 6) % 7; }
+
+const CAL_MONTHS = [
+  { year:2026, month:2 }, // Marzo
+  { year:2026, month:3 }, // Abril
+  { year:2026, month:4 }, // Mayo
+  { year:2026, month:5 }, // Junio
+];
+
+function pad2(n) { return String(n).padStart(2,'0'); }
+
+function chipCls(ev) {
+  if(ev.type==='holiday') return 'chip-holiday';
+  if(ev.type==='exam')    return 'chip-exam';
+  if(ev.type==='entrega') return 'chip-entrega';
+  if(ev.type==='semana')  return 'chip-semana';
+  if(ev.type==='repaso')  return 'chip-repaso';
+  if(ev.type==='cfu')     return 'chip-cfu';
+  return CAL_SUBJECTS[ev.subj]?.chipClass || 'chip-epi';
+}
+function evCls(ev) {
+  if(ev.type==='holiday') return 'ev-holiday';
+  if(ev.type==='exam')    return 'ev-exam';
+  if(ev.type==='entrega') return 'ev-entrega';
+  if(ev.type==='semana')  return 'ev-semana';
+  if(ev.type==='repaso')  return 'ev-repaso';
+  if(ev.type==='cfu')     return 'ev-cfu';
+  return CAL_SUBJECTS[ev.subj]?.evClass || 'ev-epi';
+}
+function evIcon(type) {
+  return { normal:'📖', practica:'✏️', holiday:'🔴', exam:'📝', repaso:'🔁', semana:'🟣', entrega:'📋', cfu:'📋' }[type] || '📖';
+}
+
+// ─────────────────────────────────────────────
+// RENDER MONTHLY CALENDAR
+// ─────────────────────────────────────────────
+function renderCrono() {
+  const container = document.getElementById('cronoContent');
+  container.innerHTML = '';
+
+  // Legend
+  const legend = document.createElement('div');
+  legend.style.cssText = 'display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;align-items:center;';
+  legend.innerHTML = `
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      <span style="width:10px;height:10px;border-radius:50%;background:#27ae60;display:inline-block"></span>Proy. de Inversión
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      <span style="width:10px;height:10px;border-radius:50%;background:#e67e22;display:inline-block"></span>Ec. Internacional
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      <span style="width:10px;height:10px;border-radius:50%;background:#2c7be5;display:inline-block"></span>Estadística III
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      <span style="width:10px;height:10px;border-radius:50%;background:#8e44ad;display:inline-block"></span>Ec. Monetaria
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      <span style="width:10px;height:10px;border-radius:50%;background:#e74c3c;display:inline-block"></span>Feriado / Semana de Mayo
+    </span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">
+      <span style="width:10px;height:10px;border-radius:50%;background:#1a73e8;display:inline-block"></span>Entrega
+    </span>
+    <span style="font-size:11px;color:var(--muted);margin-left:auto">Hacé clic en los días con eventos para ver el detalle</span>
+  `;
+  container.appendChild(legend);
+
+  const today = new Date();
+
+  CAL_MONTHS.forEach(({ year, month }) => {
+    const section = document.createElement('div');
+    section.className = 'cal-month-section';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'cal-month-header';
+    hdr.innerHTML = `<span class="cal-month-name">${MONTH_NAMES[month]}</span><span class="cal-month-year">${year}</span>`;
+    section.appendChild(hdr);
+
+    const gridWrap = document.createElement('div');
+    gridWrap.className = 'cal-grid-wrap';
+
+    const grid = document.createElement('div');
+    grid.className = 'cal-grid';
+
+    DOW_NAMES.forEach(d => {
+      const dh = document.createElement('div');
+      dh.className = 'cal-dow';
+      dh.textContent = d;
+      grid.appendChild(dh);
+    });
+
+    const firstJsDow = new Date(year, month, 1).getDay();
+    const firstDow = dowMonFirst(firstJsDow);
+    const daysInMonth = new Date(year, month+1, 0).getDate();
+
+    for(let i = 0; i < firstDow; i++) {
+      const e = document.createElement('div');
+      e.className = 'cal-cell empty';
+      grid.appendChild(e);
+    }
+
+    for(let day = 1; day <= daysInMonth; day++) {
+      const key = pad2(day) + '/' + pad2(month+1);
+      const events = DAY_MAP[key] || [];
+      const jsDay = new Date(year, month, day).getDay();
+      const dowMF = dowMonFirst(jsDay);
+      const isToday = today.getFullYear()===year && today.getMonth()===month && today.getDate()===day;
+      const isSunday = jsDay === 0;
+
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell' +
+        (events.length ? ' has-event' : '') +
+        (isSunday ? ' sunday' : '') +
+        (isToday ? ' today' : '');
+
+      // Day number
+      const numEl = document.createElement('div');
+      numEl.className = 'cal-cell-num';
+      numEl.textContent = day;
+      cell.appendChild(numEl);
+
+      // Group events by subject, show max 1 chip per subject + special chips
+      // Priority: exam/entrega first, then one per subj
+      const shown = new Set();
+      const sorted = [...events].sort((a,b) => {
+        const priority = {exam:0, entrega:1, holiday:2, repaso:3, semana:4, normal:5, practica:6};
+        return (priority[a.type]||9) - (priority[b.type]||9);
+      });
+
+      let chipCount = 0;
+      sorted.forEach(ev => {
+        if(chipCount >= 3) return;
+        const chipKey = ev.type==='exam'||ev.type==='entrega'||ev.type==='holiday'||ev.type==='semana'||ev.type==='repaso'
+          ? ev.type + ev.subj
+          : ev.subj;
+        if(shown.has(chipKey)) return;
+        shown.add(chipKey);
+
+        const chip = document.createElement('div');
+        chip.className = `cal-chip ${chipCls(ev)}`;
+        const dot = document.createElement('span');
+        dot.className = 'cal-chip-dot';
+        dot.style.background = ev.type==='holiday'||ev.type==='semana' ? '#e74c3c' :
+                                ev.type==='exam'    ? '#c0392b' :
+                                ev.type==='entrega' ? '#1a73e8' :
+                                ev.type==='cfu'     ? '#16a085' :
+                                CAL_SUBJECTS[ev.subj]?.color || '#888';
+        const lbl = document.createElement('span');
+        lbl.className = 'cal-chip-label';
+        lbl.textContent = ev.type==='exam'    ? '📝 Parcial' :
+                          ev.type==='entrega' ? '📋 Entrega' :
+                          ev.type==='holiday' ? '🔴 Feriado' :
+                          ev.type==='semana'  ? '🟣 Sem. Mayo' :
+                          ev.type==='repaso'  ? '🔁 Repaso' :
+                          ev.type==='cfu'     ? '📋 CFU' :
+                          CAL_SUBJECTS[ev.subj]?.name || '';
+        chip.appendChild(dot);
+        chip.appendChild(lbl);
+        cell.appendChild(chip);
+        chipCount++;
+      });
+
+      if(events.length) {
+        (function(d,m,y,evs,dMF){ cell.addEventListener('click',()=>showDayModal(d,m,y,evs,dMF)); })(day,month,year,events,dowMF);
+      }
+
+      grid.appendChild(cell);
+    }
+
+    const totalCells = firstDow + daysInMonth;
+    const rem = totalCells % 7;
+    if(rem) for(let i=0;i<7-rem;i++){const e=document.createElement('div');e.className='cal-cell empty';grid.appendChild(e);}
+
+    gridWrap.appendChild(grid);
+    section.appendChild(gridWrap);
+    container.appendChild(section);
+  });
+}
+
+// ─────────────────────────────────────────────
+// DAY MODAL
+// ─────────────────────────────────────────────
+function showDayModal(day, month, year, events, dowMF) {
+  const dateStr = `${DOW_LONG[dowMF]}, ${day} de ${MONTH_NAMES[month]} de ${year}`;
+
+  // Group by subject
+  const bySubj = {};
+  events.forEach(ev => {
+    const k = ev.subj;
+    if(!bySubj[k]) bySubj[k] = [];
+    bySubj[k].push(ev);
+  });
+
+  let sectionsHTML = Object.keys(bySubj).map(subjKey => {
+    const subj = CAL_SUBJECTS[subjKey];
+    const evRows = bySubj[subjKey].map(ev => `
+      <div class="day-event-row ${evCls(ev)}">
+        <span class="day-event-icon">${evIcon(ev.type)}</span>
+        <div>
+          <div>${ev.text.replace(/^[🔴📝🟣📋]\s*/u,'')}</div>
+          ${ev.horario ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">⏰ ${ev.horario}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+    return `
+      <div class="day-subj-section">
+        <div class="day-subj-header">
+          <div class="day-subj-stripe" style="background:${subj?.color||'#888'}"></div>
+          <span style="color:${subj?.color||'#888'}">${subj?.name||subjKey}</span>
+        </div>
+        ${evRows}
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="day-modal-date">Calendario Académico 2026</div>
+    <div class="day-modal-title">${dateStr}</div>
+    ${sectionsHTML}
+  `;
+  document.getElementById('modalDetail').classList.add('open');
+}
+
+
+// ── Tabs ──
+function showTab(t) {
+  ['weekly','subjects','consultas','exams','crono','tareas','notas'].forEach(id =>
+    document.getElementById('tab-'+id).style.display = id===t ? '' : 'none'
+  );
+  document.querySelectorAll('.tab').forEach((el,i) =>
+    el.classList.toggle('active', ['weekly','subjects','consultas','exams','crono','tareas','notas'][i]===t)
+  );
+  if(t==='weekly')    renderWeek();
+  if(t==='subjects')  renderSubjects();
+  if(t==='consultas') renderConsultas();
+  if(t==='exams')     renderExams();
+  if(t==='crono')     renderCrono();
+  if(t==='tareas')    renderTareas();
+  if(t==='notas')     renderNotas();
+}
+
+// ─────────────────────────────────────────────
+// TAREAS
+// ─────────────────────────────────────────────
+let tareas = JSON.parse(localStorage.getItem('unc_tareas') || '[]');
+let notas  = JSON.parse(localStorage.getItem('unc_notas')  || '[]');
+
+function saveTareas() { 
+  localStorage.setItem('unc_tareas', JSON.stringify(tareas)); 
+  syncTriggerChange();
+}
+function saveNotas()  { 
+  localStorage.setItem('unc_notas',  JSON.stringify(notas));  
+  syncTriggerChange();
+}
+
+const SUBJ_COLORS = {
+  'estadistica': '#2c7be5', 'epi': '#27ae60',
+  'monetaria': '#8e44ad', 'ec-int': '#e67e22'
+};
+const SUBJ_NAMES = {
+  'estadistica': 'Estadística III', 'epi': 'Proyectos de Inversión',
+  'monetaria': 'Ec. Monetaria', 'ec-int': 'Ec. Internacional'
+};
+
+function renderTareas() {
+  const list   = document.getElementById('tareasList');
+  const empty  = document.getElementById('tareasEmpty');
+  list.innerHTML = '';
+
+  const sorted = [...tareas].sort((a,b) => {
+    if(a.done !== b.done) return a.done ? 1 : -1;
+    return new Date(a.fecha||'9999') - new Date(b.fecha||'9999');
+  });
+
+  if(!sorted.length) { empty.style.display=''; return; }
+  empty.style.display = 'none';
+
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  sorted.forEach(t => {
+    const card = document.createElement('div');
+    const borderColor = t.materia ? (SUBJ_COLORS[t.materia]||'var(--border)') : 'var(--border)';
+    card.className = 'tarea-card' + (t.done ? ' done' : '');
+    card.style.borderLeftColor = borderColor;
+
+    // Checkbox
+    const chk = document.createElement('div');
+    chk.className = 'tarea-check' + (t.done ? ' checked' : '');
+    chk.textContent = t.done ? '✓' : '';
+    chk.addEventListener('click', () => {
+      t.done = !t.done;
+      saveTareas();
+      renderTareas();
+    });
+
+    // Body
+    const body = document.createElement('div');
+    body.className = 'tarea-body';
+
+    let badgeHTML = '';
+    if(t.fecha) {
+      const d = new Date(t.fecha + 'T12:00:00');
+      const diff = Math.ceil((d - today) / 864e5);
+      if(!t.done) {
+        if(diff < 0)      badgeHTML = `<span class="tarea-fecha-badge tarea-vencida">Vencida</span>`;
+        else if(diff===0) badgeHTML = `<span class="tarea-fecha-badge tarea-hoy">¡Hoy!</span>`;
+        else if(diff<=3)  badgeHTML = `<span class="tarea-fecha-badge tarea-pronto">en ${diff} día${diff>1?'s':''}</span>`;
+        else              badgeHTML = `<span class="tarea-fecha-badge tarea-ok">en ${diff} días</span>`;
+      }
+    }
+
+    const titulo = document.createElement('div');
+    titulo.className = 'tarea-titulo';
+    titulo.innerHTML = t.titulo + badgeHTML;
+
+    const meta = document.createElement('div');
+    meta.className = 'tarea-meta';
+    let metaParts = [];
+    if(t.fecha) { const d=new Date(t.fecha+'T12:00:00'); metaParts.push('📅 '+d.getDate()+' de '+MONTH_NAMES[d.getMonth()]); }
+    if(t.hora)  metaParts.push('⏰ '+t.hora+' hs');
+    if(t.materia) metaParts.push('<span style="color:'+borderColor+';font-weight:600">'+SUBJ_NAMES[t.materia]+'</span>');
+    if(t.desc)  metaParts.push('📝 '+t.desc);
+    meta.innerHTML = metaParts.join(' &nbsp;·&nbsp; ');
+
+    body.appendChild(titulo);
+    body.appendChild(meta);
+
+    // Delete btn
+    const del = document.createElement('button');
+    del.className = 'btn btn-danger';
+    del.style.alignSelf = 'center';
+    del.textContent = '🗑';
+    del.addEventListener('click', () => {
+      if(!confirm('¿Eliminar esta tarea?')) return;
+      tareas = tareas.filter(x => x.id !== t.id);
+      saveTareas(); renderTareas();
+    });
+
+    card.appendChild(chk);
+    card.appendChild(body);
+    card.appendChild(del);
+    list.appendChild(card);
+  });
+}
+
+function openAddTarea() {
+  document.getElementById('tTitulo').value = '';
+  document.getElementById('tFecha').value  = '';
+  document.getElementById('tHora').value   = '';
+  document.getElementById('tDesc').value   = '';
+  document.getElementById('tMateria').value = '';
+  document.getElementById('modalTarea').classList.add('open');
+}
+
+function saveTarea() {
+  const titulo = document.getElementById('tTitulo').value.trim();
+  if(!titulo) { alert('Escribí un título para la tarea'); return; }
+  tareas.push({
+    id: Date.now(),
+    titulo,
+    fecha:   document.getElementById('tFecha').value,
+    hora:    document.getElementById('tHora').value,
+    materia: document.getElementById('tMateria').value,
+    desc:    document.getElementById('tDesc').value.trim(),
+    done:    false
+  });
+  saveTareas();
+  closeModal('modalTarea');
+  renderTareas();
+  toast('Tarea guardada ✓');
+}
+
+document.getElementById('btnAddTarea').addEventListener('click', openAddTarea);
+
+// ─────────────────────────────────────────────
+// NOTAS
+// ─────────────────────────────────────────────
+let editingNotaId = null;
+
+function renderNotas() {
+  const list  = document.getElementById('notasList');
+  const empty = document.getElementById('notasEmpty');
+  list.innerHTML = '';
+
+  if(!notas.length) { empty.style.display=''; return; }
+  empty.style.display = 'none';
+
+  [...notas].sort((a,b) => b.updated - a.updated).forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'nota-card';
+
+    const header = document.createElement('div');
+    header.className = 'nota-header';
+
+    const info = document.createElement('div');
+    const titulo = document.createElement('div');
+    titulo.className = 'nota-titulo';
+    titulo.textContent = n.titulo || 'Sin título';
+    const fecha = document.createElement('div');
+    fecha.className = 'nota-fecha';
+    const d = new Date(n.updated);
+    fecha.textContent = 'Última edición: ' + d.getDate() + '/' + pad2(d.getMonth()+1) + '/' + d.getFullYear() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    info.appendChild(titulo);
+    info.appendChild(fecha);
+
+    const actions = document.createElement('div');
+    actions.className = 'nota-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-outline btn-sm';
+    editBtn.textContent = '✏️ Editar';
+    editBtn.addEventListener('click', (e) => { e.stopPropagation(); openEditNota(n.id); });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger';
+    delBtn.textContent = '🗑';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if(!confirm('¿Eliminar esta nota?')) return;
+      notas = notas.filter(x => x.id !== n.id);
+      saveNotas(); renderNotas();
+    });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    header.appendChild(info);
+    header.appendChild(actions);
+
+    const body = document.createElement('div');
+    body.className = 'nota-body';
+    body.textContent = n.contenido;
+
+    header.addEventListener('click', () => body.classList.toggle('open'));
+
+    card.appendChild(header);
+    card.appendChild(body);
+    list.appendChild(card);
+  });
+}
+
+function openAddNota() {
+  editingNotaId = null;
+  document.getElementById('notaModalTitle').textContent = '📓 Nueva Nota';
+  document.getElementById('nTitulo').value    = '';
+  document.getElementById('nContenido').value = '';
+  document.getElementById('notaSaveBtn').textContent = 'Guardar nota';
+  document.getElementById('modalNota').classList.add('open');
+}
+
+function openEditNota(id) {
+  const n = notas.find(x => x.id === id);
+  if(!n) return;
+  editingNotaId = id;
+  document.getElementById('notaModalTitle').textContent = '✏️ Editar Nota';
+  document.getElementById('nTitulo').value    = n.titulo;
+  document.getElementById('nContenido').value = n.contenido;
+  document.getElementById('notaSaveBtn').textContent = 'Guardar cambios';
+  document.getElementById('modalNota').classList.add('open');
+}
+
+function saveNota() {
+  const titulo    = document.getElementById('nTitulo').value.trim();
+  const contenido = document.getElementById('nContenido').value.trim();
+  if(!titulo && !contenido) { alert('Escribí algo en la nota'); return; }
+
+  if(editingNotaId) {
+    const n = notas.find(x => x.id === editingNotaId);
+    if(n) { n.titulo = titulo; n.contenido = contenido; n.updated = Date.now(); }
+  } else {
+    notas.push({ id: Date.now(), titulo, contenido, updated: Date.now() });
+  }
+  saveNotas();
+  closeModal('modalNota');
+  renderNotas();
+  toast(editingNotaId ? 'Nota actualizada ✓' : 'Nota guardada ✓');
+  editingNotaId = null;
+}
+
+document.getElementById('btnAddNota').addEventListener('click', openAddNota);
+
+// ── Weekly ──
+const CONSULTAS_DATA = [
+  {
+    subj: 'estadistica',
+    name: 'Estadística III',
+    color: '#2c7be5',
+    commission: 'FLORENSA',
+    slots: [
+      { tipo: 'Teórico',  dia: 'Lunes',     hora: '14:30',  modalidad: 'presencial', lugar: 'Box 352' },
+      { tipo: 'Práctico', dia: 'Miércoles',  hora: '14:30',  modalidad: 'presencial', lugar: 'Box 344' },
+    ]
+  },
+  {
+    subj: 'ec-int',
+    name: 'Economía Internacional',
+    color: '#e67e22',
+    commission: 'GANAME',
+    slots: [
+      { tipo: 'Práctico', dia: 'Miércoles',  hora: '15:00',  modalidad: 'virtual',    lugar: 'Google Meet', link: 'https://meet.google.com/pms-zrfq-hss' },
+      { tipo: 'Práctico', dia: 'Viernes',    hora: '10:00',  modalidad: 'presencial', lugar: 'Box 253' },
+      { tipo: 'General',  dia: 'Jueves',     hora: '17:00',  modalidad: 'presencial', lugar: 'Box 238', docente: 'Prof. Gáname' },
+    ]
+  },
+  {
+    subj: 'epi',
+    name: 'Proyectos de Inversión',
+    color: '#27ae60',
+    commission: 'SARTORI_AISA',
+    slots: [
+      { tipo: 'General',  dia: '—',          hora: '—',      modalidad: 'virtual',    lugar: 'Ver Moodle / WhatsApp de la cátedra' },
+    ]
+  },
+  {
+    subj: 'monetaria',
+    name: 'Economía Monetaria',
+    color: '#8e44ad',
+    commission: 'NEDER - CFC',
+    slots: [
+      { tipo: 'General',  dia: '—',          hora: '—',      modalidad: 'presencial', lugar: 'Consultar con la cátedra' },
+    ]
+  },
+];
+
+function renderConsultas() {
+  const el = document.getElementById('consultasList');
+  el.innerHTML = '';
+
+  CONSULTAS_DATA.forEach(mat => {
+    const card = document.createElement('div');
+    card.className = 'consulta-card';
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'consulta-card-header';
+
+    const stripe = document.createElement('div');
+    stripe.className = 'consulta-stripe';
+    stripe.style.background = mat.color;
+
+    const info = document.createElement('div');
+    info.style.flex = '1';
+    info.innerHTML = `<div class="consulta-materia">${mat.name}</div>
+                      <div class="consulta-comision">👨‍🏫 ${mat.commission}</div>`;
+
+    header.appendChild(stripe);
+    header.appendChild(info);
+    card.appendChild(header);
+
+    // Rows
+    const rows = document.createElement('div');
+    rows.className = 'consulta-rows';
+
+    mat.slots.forEach(slot => {
+      const row = document.createElement('div');
+      row.className = 'consulta-row';
+
+      const icon = document.createElement('div');
+      icon.className = 'consulta-row-icon';
+      icon.textContent = slot.modalidad === 'virtual' ? '💻' : '🏫';
+
+      const rowInfo = document.createElement('div');
+      rowInfo.className = 'consulta-row-info';
+      rowInfo.innerHTML = `<div class="consulta-row-dia">${slot.dia !== '—' ? slot.dia + ' · ' + slot.hora + ' hs' : 'Horario a confirmar'}</div>
+                           <div class="consulta-row-detalle">📍 ${slot.lugar}${slot.docente ? ' &nbsp;·&nbsp; 👩‍🏫 ' + slot.docente : ''}</div>`;
+
+      const badges = document.createElement('div');
+      badges.style.display = 'flex'; badges.style.gap = '6px'; badges.style.flexWrap = 'wrap'; badges.style.alignItems = 'center';
+
+      const b1 = document.createElement('span');
+      b1.className = 'consulta-badge ' + (slot.modalidad === 'virtual' ? 'badge-virtual' : 'badge-presencial');
+      b1.textContent = slot.modalidad === 'virtual' ? '💻 Virtual' : '📍 Presencial';
+
+      const b2 = document.createElement('span');
+      b2.className = 'consulta-badge ' + (slot.tipo === 'Teórico' ? 'badge-teorico' : 'badge-practico');
+      b2.textContent = slot.tipo;
+
+      badges.appendChild(b1);
+      badges.appendChild(b2);
+
+      // Meet link button
+      if (slot.link) {
+        const meetBtn = document.createElement('a');
+        meetBtn.href = slot.link;
+        meetBtn.target = '_blank';
+        meetBtn.rel = 'noopener noreferrer';
+        meetBtn.style.cssText = 'display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;background:#1a73e8;color:#fff;font-size:11px;font-weight:700;text-decoration:none;transition:background 0.15s;';
+        meetBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/></svg> Unirse';
+        meetBtn.addEventListener('mouseenter', () => meetBtn.style.background = '#1558b0');
+        meetBtn.addEventListener('mouseleave', () => meetBtn.style.background = '#1a73e8');
+        badges.appendChild(meetBtn);
+      }
+
+      row.appendChild(icon);
+      row.appendChild(rowInfo);
+      row.appendChild(badges);
+      rows.appendChild(row);
+    });
+
+    card.appendChild(rows);
+    el.appendChild(card);
+  });
+}
+
+
+const SLOT_H = 58; // px per hour slot — must match CSS .time-slot height
+
+function renderWeek() {
+  const outer = document.getElementById('weekOuter');
+  outer.innerHTML = '';
+
+  const HOUR_COUNT = HOURS.length;
+  const totalH = HOUR_COUNT * SLOT_H;
+
+  // ── Header row ──
+  const headerRow = document.createElement('div');
+  headerRow.className = 'week-header-row';
+  const thTime = document.createElement('div');
+  thTime.className = 'wh tc';
+  headerRow.appendChild(thTime);
+  DAYS_SHORT.forEach(d => {
+    const th = document.createElement('div');
+    th.className = 'wh';
+    th.textContent = d;
+    headerRow.appendChild(th);
+  });
+  outer.appendChild(headerRow);
+
+  // ── Body ──
+  const body = document.createElement('div');
+  body.className = 'week-body';
+
+  // Time column
+  const timeCol = document.createElement('div');
+  timeCol.className = 'time-col-wrap';
+  HOURS.forEach(h => {
+    const slot = document.createElement('div');
+    slot.className = 'time-slot';
+    slot.textContent = h + ':00';
+    timeCol.appendChild(slot);
+  });
+  body.appendChild(timeCol);
+
+  // Day columns
+  for(let d = 0; d < 5; d++) {
+    const col = document.createElement('div');
+    col.className = 'day-col';
+    col.style.height = totalH + 'px';
+
+    // Background hour lines
+    const bg = document.createElement('div');
+    bg.className = 'day-col-bg';
+    HOURS.forEach(() => {
+      const line = document.createElement('div');
+      line.className = 'hour-line';
+      bg.appendChild(line);
+    });
+    col.appendChild(bg);
+
+    // Collect all classes for this day
+    const dayClasses = [];
+    subjects.forEach(s => {
+      s.classes.forEach(c => {
+        if(c.days.includes(d)) {
+          dayClasses.push({ s, c, sh: parseInt(c.start), eh: parseInt(c.end) });
+        }
+      });
+    });
+
+    // Assign columns within the day to avoid visual overlap
+    // Each entry gets: colIndex, totalCols
+    dayClasses.forEach((entry, i) => {
+      // Find all entries that overlap with this one
+      const overlapping = dayClasses.filter((other, j) =>
+        entry.sh < other.eh && entry.eh > other.sh
+      );
+      // Sort overlapping by start time then by subject id for stable ordering
+      overlapping.sort((a, b) => a.sh - b.sh || a.s.id - b.s.id);
+      const totalCols = overlapping.length;
+      const colIndex  = overlapping.indexOf(entry);
+
+      const GAP = 3;
+      const widthPct  = (1 / totalCols);
+      const leftPct   = colIndex * widthPct;
+
+      const topOffset = (entry.sh - HOURS[0]) * SLOT_H;
+      const blockH    = (entry.eh - entry.sh) * SLOT_H - 4;
+
+      const b = document.createElement('div');
+      b.className = `cblock color-${entry.s.colorKey}`;
+      b.style.top    = (topOffset + 2) + 'px';
+      b.style.height = blockH + 'px';
+      b.style.left   = 'calc(' + (leftPct * 100).toFixed(2) + '% + ' + GAP + 'px)';
+      b.style.right  = 'auto';
+      b.style.width  = 'calc(' + (widthPct * 100).toFixed(2) + '% - ' + (GAP * 2) + 'px)';
+
+      const cn = document.createElement('div');
+      cn.className = 'cn';
+      cn.textContent = entry.s.name.replace('Economía ', 'Ec. ');
+
+      const cr = document.createElement('div');
+      cr.className = 'cr';
+      cr.textContent = '🚪 ' + entry.c.room;
+
+      const ct = document.createElement('div');
+      ct.className = 'ct';
+      ct.textContent = entry.c.start + '–' + entry.c.end + ' · ' + entry.c.type;
+
+      b.appendChild(cn);
+      b.appendChild(cr);
+      b.appendChild(ct);
+
+      (function(subj, cls) {
+        b.addEventListener('click', function() { showDetail(subj, cls); });
+      })(entry.s, entry.c);
+
+      col.appendChild(b);
+    });
+
+    body.appendChild(col);
+  }
+
+  outer.appendChild(body);
+}
+
+function showDetail(s, c) {
+  document.getElementById('detailContent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <div style="width:14px;height:14px;border-radius:50%;background:${s.color};flex-shrink:0"></div>
+      <div class="modal-title" style="margin:0">${s.name}</div>
+    </div>
+    <div>
+      <div class="detail-row"><span class="detail-label">👨‍🏫 Comisión</span>${s.commission}</div>
+      <div class="detail-row"><span class="detail-label">📋 Tipo</span>${c.type}</div>
+      <div class="detail-row"><span class="detail-label">⏰ Horario</span>${c.start} – ${c.end} hs</div>
+      <div class="detail-row"><span class="detail-label">🚪 Aula</span><strong>${c.room}</strong></div>
+      <div class="detail-row"><span class="detail-label">📅 Inicio</span>09/03/2026</div>
+    </div>`;
+  document.getElementById('modalDetail').classList.add('open');
+}
+
+// ── Subjects ──
+function renderSubjects() {
+  document.getElementById('subjectList').innerHTML = subjects.map(s => {
+    const rows = s.classes.map(c =>
+      `${c.days.map(d=>DAYS_LONG[d]).join('/')} &nbsp;${c.start}–${c.end} &nbsp;·&nbsp; Aula <strong>${c.room}</strong> &nbsp;<em style="color:var(--muted)">(${c.type})</em>`
+    ).join('<br>');
+    return `<div class="subject-pill">
+      <div class="sp-stripe" style="background:${s.color}"></div>
+      <div class="sp-info">
+        <div class="sp-name">${s.name}</div>
+        <div class="sp-meta">👨‍🏫 ${s.commission}<br>${rows}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Exams ──
+const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function renderExams() {
+  const el = document.getElementById('examList');
+  el.innerHTML = '';
+
+  if (!exams.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.innerHTML = '<div class="empty-icon">📝</div>No hay parciales cargados aún.';
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn btn-dark btn-sm';
+    addBtn.style.marginTop = '14px';
+    addBtn.textContent = '+ Agregar parcial';
+    addBtn.addEventListener('click', openAddExam);
+    empty.appendChild(addBtn);
+    el.appendChild(empty);
+    return;
+  }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const sorted = [...exams].sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  sorted.forEach(function(e) {
+    const d = new Date(e.date + 'T12:00:00');
+    const diff = Math.ceil((d - today) / 864e5);
+    const subj = subjects.find(s => s.id == e.subjectId);
+    const border = subj ? subj.color : '#e74c3c';
+
+    const card = document.createElement('div');
+    card.className = 'exam-card';
+    card.style.borderLeftColor = border;
+
+    // Date block
+    const dateDiv = document.createElement('div');
+    dateDiv.className = 'exam-date';
+    dateDiv.innerHTML = '<div class="exam-day">' + d.getDate() + '</div>' +
+                        '<div class="exam-month">' + MONTHS[d.getMonth()] + '</div>';
+
+    // Divider
+    const divider = document.createElement('div');
+    divider.className = 'exam-divider';
+
+    // Info block
+    const info = document.createElement('div');
+    info.className = 'exam-info';
+
+    let badgeHTML = '';
+    if (diff >= 0) {
+      if (diff === 0)  badgeHTML = '<span class="badge badge-soon">¡Hoy!</span>';
+      else if (diff <= 14) badgeHTML = '<span class="badge badge-soon">en ' + diff + ' días</span>';
+      else             badgeHTML = '<span class="badge badge-ok">en ' + diff + ' días</span>';
+    }
+
+    const title = document.createElement('div');
+    title.className = 'exam-title';
+    title.innerHTML = e.type + ' – ' + (subj ? subj.name : e.subjectName) + badgeHTML;
+
+    const sub = document.createElement('div');
+    sub.className = 'exam-sub';
+    sub.innerHTML = '⏰ ' + e.time + ' hs &nbsp;·&nbsp; 🚪 ' + (e.room || 'Sin aula') +
+                    (e.notes ? ' &nbsp;·&nbsp; 📋 ' + e.notes : '');
+
+    info.appendChild(title);
+    info.appendChild(sub);
+
+    // Delete button
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-danger';
+    btn.textContent = '🗑';
+    btn.addEventListener('click', (function(examId) {
+      return function() {
+        if (!confirm('¿Eliminar este parcial?')) return;
+        exams = exams.filter(function(x) { return String(x.id) !== String(examId); });
+        save();
+        renderExams();
+        toast('Parcial eliminado ✓');
+      };
+    })(e.id));
+
+    card.appendChild(dateDiv);
+    card.appendChild(divider);
+    card.appendChild(info);
+    card.appendChild(btn);
+    el.appendChild(card);
+  });
+}
+
+function openAddExam() {
+  document.getElementById('eSubject').innerHTML = subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  ['eDate','eRoom','eNotes'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('eTime').value='10:00';
+  document.getElementById('modalExam').classList.add('open');
+}
+function saveExam() {
+  const date = document.getElementById('eDate').value;
+  if(!date){alert('Seleccioná una fecha');return;}
+  const sid = parseInt(document.getElementById('eSubject').value);
+  const subj = subjects.find(s=>s.id===sid);
+  exams.push({id:Date.now(), subjectId:sid, subjectName:subj?subj.name:'—',
+    type:document.getElementById('eType').value, date,
+    time:document.getElementById('eTime').value,
+    room:document.getElementById('eRoom').value.trim(),
+    notes:document.getElementById('eNotes').value.trim()});
+  save(); closeModal('modalExam'); renderExams(); toast('Parcial guardado ✓');
+}
+function deleteExam(id){if(!confirm("¿Eliminar este parcial?"))return; exams=exams.filter(e=>String(e.id)!==String(id)); save(); renderExams(); toast("Parcial eliminado ✓");}
+
+// ── Export ──
+function showExport() {
+  let totalCls=0;
+  subjects.forEach(s=>s.classes.forEach(c=>totalCls+=c.days.length*18));
+  document.getElementById('exportSummary').innerHTML=`<div style="display:flex;gap:20px;flex-wrap:wrap">
+    <div>📚 <strong>4</strong> materias</div>
+    <div>🔄 <strong>~${totalCls}</strong> clases (Mayo–Agosto)</div>
+    <div>📝 <strong>${exams.length}</strong> parcial${exams.length!==1?'es':''}</div>
+  </div>`;
+  document.getElementById('modalExport').classList.add('open');
+}
+
+function downloadICS() {
+  const lines = ['BEGIN:VCALENDAR','VERSION:2.0',
+    'PRODID:-//Agenda UNC Economia//ES','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'X-WR-CALNAME:Agenda UNC - Lic. Economía 2026',
+    'X-WR-TIMEZONE:America/Argentina/Cordoba'];
+
+  // Classes from 09/03/2026 to 31/08/2026
+  const startDate = new Date('2026-03-09T00:00:00');
+  const endDate   = new Date('2026-08-31T00:00:00');
+
+  subjects.forEach(s => {
+    s.classes.forEach(cls => {
+      cls.days.forEach(dayIdx => {
+        // dayIdx 0=Mon. startDate is Monday 09/03
+        const cur0 = new Date(startDate);
+        cur0.setDate(cur0.getDate() + dayIdx); // offset to correct weekday
+        let cur = new Date(cur0);
+        while(cur <= endDate) {
+          const [sh,sm]=cls.start.split(':').map(Number);
+          const [eh,em]=cls.end.split(':').map(Number);
+          const dtS=new Date(cur); dtS.setHours(sh,sm,0,0);
+          const dtE=new Date(cur); dtE.setHours(eh,em,0,0);
+          lines.push('BEGIN:VEVENT',
+            `UID:cls-${s.id}-d${dayIdx}-${toL(dtS)}@unc`,
+            `DTSTAMP:${toU(new Date())}`,
+            `DTSTART;TZID=America/Argentina/Cordoba:${toL(dtS)}`,
+            `DTEND;TZID=America/Argentina/Cordoba:${toL(dtE)}`,
+            `SUMMARY:${s.name} (${cls.type})`,
+            `DESCRIPTION:Comisión: ${s.commission}\\nTipo: ${cls.type}\\nAula: ${cls.room}`,
+            `LOCATION:Aula ${cls.room} - FCE UNC`,
+            'END:VEVENT');
+          cur.setDate(cur.getDate()+7);
+        }
+      });
+    });
+  });
+
+  exams.forEach(e => {
+    const subj=subjects.find(s=>s.id==e.subjectId);
+    const dtS=new Date(e.date+'T'+e.time+':00');
+    const dtE=new Date(dtS); dtE.setHours(dtE.getHours()+2);
+    lines.push('BEGIN:VEVENT',
+      `UID:exam-${e.id}@unc`,`DTSTAMP:${toU(new Date())}`,
+      `DTSTART;TZID=America/Argentina/Cordoba:${toL(dtS)}`,
+      `DTEND;TZID=America/Argentina/Cordoba:${toL(dtE)}`,
+      `SUMMARY:📝 ${e.type} – ${subj?subj.name:e.subjectName}`,
+      `DESCRIPTION:${e.notes||''}\\nAula: ${e.room||'S/D'}`,
+      `LOCATION:${e.room||'FCE UNC'}`,
+      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Examen mañana','TRIGGER:-P1D','END:VALARM',
+      'END:VEVENT');
+  });
+
+  lines.push('END:VCALENDAR');
+  const blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='agenda-unc-economia-2026.ics'; a.click();
+  closeModal('modalExport'); toast('Archivo .ics descargado ✓');
+}
+
+function toU(d){return d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';}
+function toL(d){const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600);}
+
+// ── GitHub Gist Sync System ──
+
+const SYNC_CONFIG_KEY = 'unc_sync_config';
+
+function getSyncConfig() {
+  try {
+    return JSON.parse(localStorage.getItem(SYNC_CONFIG_KEY)) || { token: '', gistId: '', lastSync: 0 };
+  } catch (e) {
+    return { token: '', gistId: '', lastSync: 0 };
+  }
+}
+
+function saveSyncConfig(config) {
+  localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(config));
+  updateSyncButtonUI();
+}
+
+function updateSyncButtonUI() {
+  const config = getSyncConfig();
+  const btn = document.querySelector('.btn-sync');
+  if (!btn) return;
+  
+  if (config.token && config.gistId) {
+    btn.classList.add('connected');
+    btn.classList.remove('error');
+    btn.innerHTML = `
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cloud-icon" style="color:#27ae60"><path d="M17.5 19A5.5 5.5 0 0 0 17 8H16.03a9 9 0 1 0-11.96 4.96A5.5 5.5 0 0 0 5 19z"></path><path d="m9 13 2 2 4-4"/></svg>
+      Sincronizado
+    `;
+  } else {
+    btn.classList.remove('connected');
+    btn.classList.remove('error');
+    btn.innerHTML = `
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cloud-icon"><path d="M17.5 19A5.5 5.5 0 0 0 17 8H16.03a9 9 0 1 0-11.96 4.96A5.5 5.5 0 0 0 5 19z"></path></svg>
+      Sincronizar nube
+    `;
+  }
+}
+
+function openSyncSettings() {
+  const config = getSyncConfig();
+  document.getElementById('syncToken').value = config.token || '';
+  document.getElementById('syncGistId').value = config.gistId || '';
+  
+  const statusBox = document.getElementById('syncStatusBox');
+  const disconnectBtn = document.getElementById('btnSyncDisconnect');
+  
+  if (config.token) {
+    statusBox.style.display = 'block';
+    disconnectBtn.style.display = 'inline-block';
+    document.getElementById('syncStatusTitle').textContent = 'Conectado a GitHub';
+    if (config.lastSync) {
+      const d = new Date(config.lastSync);
+      document.getElementById('syncStatusText').textContent = `Última sincronización exitosa: ${d.getDate()}/${pad2(d.getMonth()+1)} a las ${pad2(d.getHours())}:${pad2(d.getMinutes())} hs. (Gist: ${config.gistId})`;
+    } else {
+      document.getElementById('syncStatusText').textContent = 'Conectado. Aún no se han sincronizado los datos en esta sesión.';
+    }
+    statusBox.style.borderLeftColor = '#27ae60';
+  } else {
+    statusBox.style.display = 'none';
+    disconnectBtn.style.display = 'none';
+  }
+  
+  document.getElementById('modalSync').classList.add('open');
+}
+
+async function saveAndConnectSync() {
+  const token = document.getElementById('syncToken').value.trim();
+  let gistId = document.getElementById('syncGistId').value.trim();
+  const saveBtn = document.getElementById('btnSyncSave');
+  
+  if (!token) {
+    alert('Por favor, ingresa tu GitHub Personal Access Token.');
+    return;
+  }
+  
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Conectando...';
+  
+  try {
+    // If gistId is empty, create a new Gist automatically
+    if (!gistId) {
+      toast('Creando nuevo Gist privado en GitHub...');
+      gistId = await createNewGist(token);
+      document.getElementById('syncGistId').value = gistId;
+    }
+    
+    // Test fetch to verify token & gistId
+    toast('Validando conexión y descargando datos...');
+    const cloudData = await fetchGistData(token, gistId);
+    
+    // Save credentials
+    const config = { token, gistId, lastSync: Date.now() };
+    saveSyncConfig(config);
+    
+    // Merge data from cloud into localStorage
+    if (cloudData) {
+      mergeCloudData(cloudData);
+      toast('¡Sincronización inicial exitosa! Cargando datos...');
+      // Refresh active view
+      const activeTab = document.querySelector('.tab.active');
+      if (activeTab) {
+        const tabText = activeTab.textContent.trim();
+        if (tabText.includes('Semanal')) showTab('weekly');
+        else if (tabText.includes('Materias')) showTab('subjects');
+        else if (tabText.includes('Consultas')) showTab('consultas');
+        else if (tabText.includes('Parciales')) showTab('exams');
+        else if (tabText.includes('Calendario')) showTab('crono');
+        else if (tabText.includes('Tareas')) showTab('tareas');
+        else if (tabText.includes('Notas')) showTab('notas');
+      }
+    } else {
+      // First sync of empty Gist, push local storage data to Gist
+      toast('Subiendo datos locales a GitHub...');
+      await uploadLocalDataToGist(token, gistId);
+    }
+    
+    closeModal('modalSync');
+    toast('¡Sincronización configurada y activa! ☁️');
+  } catch (error) {
+    console.error(error);
+    const btn = document.querySelector('.btn-sync');
+    if (btn) btn.classList.add('error');
+    alert('Error al conectar con GitHub: ' + error.message + '\n\nVerifica que el token sea correcto y tenga el permiso "gist" habilitado.');
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Conectar y Sincronizar';
+    updateSyncButtonUI();
+  }
+}
+
+function disconnectSync() {
+  if (!confirm('¿Seguro que deseas desconectar la sincronización? Los datos locales se mantendrán en este dispositivo, pero ya no se sincronizarán con la nube.')) return;
+  
+  localStorage.removeItem(SYNC_CONFIG_KEY);
+  updateSyncButtonUI();
+  closeModal('modalSync');
+  toast('Sincronización desactivada.');
+}
+
+async function createNewGist(token) {
+  // Collect local storage state
+  const payload = {
+    unc_subs3: JSON.parse(localStorage.getItem('unc_subs3') || 'null') || SUBJECTS_DEFAULT,
+    unc_exams3: JSON.parse(localStorage.getItem('unc_exams3') || '[]'),
+    unc_tareas: JSON.parse(localStorage.getItem('unc_tareas') || '[]'),
+    unc_notas: JSON.parse(localStorage.getItem('unc_notas') || '[]')
+  };
+  
+  const response = await fetch('https://api.github.com/gists', {
+    method: 'POST',
+    headers: {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      description: 'Agenda UNC 2026 - Datos Sincronizados',
+      public: false,
+      files: {
+        'agenda_unc_data.json': {
+          content: JSON.stringify(payload, null, 2)
+        }
+      }
+    })
+  });
+  
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`No se pudo crear el Gist. API de GitHub respondió: ${response.status} ${response.statusText} - ${errText}`);
+  }
+  
+  const resData = await response.json();
+  return resData.id;
+}
+
+async function fetchGistData(token, gistId) {
+  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`No se pudo obtener el Gist. API de GitHub respondió: ${response.status} - ${response.statusText}`);
+  }
+  
+  const resData = await response.json();
+  const file = resData.files['agenda_unc_data.json'];
+  if (!file || !file.content) {
+    return null;
+  }
+  
+  try {
+    return JSON.parse(file.content);
+  } catch (e) {
+    throw new Error('El archivo del Gist no contiene JSON válido.');
+  }
+}
+
+async function uploadLocalDataToGist(token, gistId) {
+  const payload = {
+    unc_subs3: JSON.parse(localStorage.getItem('unc_subs3') || 'null') || SUBJECTS_DEFAULT,
+    unc_exams3: JSON.parse(localStorage.getItem('unc_exams3') || '[]'),
+    unc_tareas: JSON.parse(localStorage.getItem('unc_tareas') || '[]'),
+    unc_notas: JSON.parse(localStorage.getItem('unc_notas') || '[]')
+  };
+  
+  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      files: {
+        'agenda_unc_data.json': {
+          content: JSON.stringify(payload, null, 2)
+        }
+      }
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error(`No se pudo subir los datos al Gist: ${response.status} - ${response.statusText}`);
+  }
+}
+
+function mergeCloudData(cloudData) {
+  if (!cloudData) return;
+  
+  if (cloudData.unc_subs3) {
+    subjects = cloudData.unc_subs3;
+    localStorage.setItem('unc_subs3', JSON.stringify(subjects));
+  }
+  if (cloudData.unc_exams3) {
+    exams = cloudData.unc_exams3;
+    localStorage.setItem('unc_exams3', JSON.stringify(exams));
+  }
+  if (cloudData.unc_tareas) {
+    tareas = cloudData.unc_tareas;
+    localStorage.setItem('unc_tareas', JSON.stringify(tareas));
+  }
+  if (cloudData.unc_notas) {
+    notas = cloudData.unc_notas;
+    localStorage.setItem('unc_notas', JSON.stringify(notas));
+  }
+}
+
+async function syncTriggerChange() {
+  const config = getSyncConfig();
+  if (!config.token || !config.gistId) return;
+  
+  try {
+    await uploadLocalDataToGist(config.token, config.gistId);
+    config.lastSync = Date.now();
+    saveSyncConfig(config);
+    console.log('GitHub Gist sync exitosa.');
+  } catch (error) {
+    console.error('Error al sincronizar en segundo plano:', error);
+    const btn = document.querySelector('.btn-sync');
+    if (btn) btn.classList.add('error');
+  }
+}
+
+async function autoSyncOnLoad() {
+  updateSyncButtonUI();
+  
+  const config = getSyncConfig();
+  if (!config.token || !config.gistId) return;
+  
+  console.log('Auto-sincronizando al iniciar...');
+  try {
+    const cloudData = await fetchGistData(config.token, config.gistId);
+    if (cloudData) {
+      mergeCloudData(cloudData);
+      console.log('Auto-sincronización completada.');
+      
+      const activeTab = document.querySelector('.tab.active');
+      if (activeTab) {
+        const tabText = activeTab.textContent.trim();
+        if (tabText.includes('Semanal')) renderWeek();
+        else if (tabText.includes('Materias')) renderSubjects();
+        else if (tabText.includes('Consultas')) renderConsultas();
+        else if (tabText.includes('Parciales')) renderExams();
+        else if (tabText.includes('Calendario')) renderCrono();
+        else if (tabText.includes('Tareas')) renderTareas();
+        else if (tabText.includes('Notas')) renderNotas();
+      }
+    }
+  } catch (error) {
+    console.error('Error en auto-sincronización al iniciar:', error);
+    const btn = document.querySelector('.btn-sync');
+    if (btn) btn.classList.add('error');
+  }
+}
+
+window.addEventListener('DOMContentLoaded', autoSyncOnLoad);
+
+renderWeek();
+</script>
+</body>
+</html>
